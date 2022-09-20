@@ -88,6 +88,10 @@ class Read(object):
         self.fastchem_n_t = None
         self.fastchem_n_p = None
 
+        # Haze
+        self.haze_opacity_data_file = None
+        self.haze_profile_data_file = None
+
     @staticmethod
     def delete_duplicates(long_list):
         """ deletes all duplicates in a list and returns new list """
@@ -280,6 +284,10 @@ class Read(object):
         parser.add_argument('-cloud_bottom_pressure', help='see documentation (https://heliosexo.readthedocs.io/en/latest/)', required=False)
         parser.add_argument('-cloud_bottom_mixing_ratio', help='see documentation (https://heliosexo.readthedocs.io/en/latest/)', required=False)
         parser.add_argument('-cloud_to_gas_scale_height_ratio', help='see documentation (https://heliosexo.readthedocs.io/en/latest/)', required=False)
+
+        # hazes
+        parser.add_argument('-haze_opacity', help='Path to the haze opacity file.', required=False)
+        parser.add_argument('-haze_profile', help='Path to the haze profile file containing number density and radius profiles.', required=False)
 
         # photochemical kinetics coupling
         parser.add_argument('-coupling_mode', help='see documentation (https://heliosexo.readthedocs.io/en/latest/)', required=False)
@@ -517,6 +525,13 @@ class Read(object):
                         if cloud.cloud_mixing_ratio_setting == "manual":
                             for i in range(cloud.nr_cloud_decks):
                                 cloud.cloud_to_gas_scale_height.append(npy.float64(column[9 + i]))
+
+                    # Haze files
+                    elif column[0] == "haze" and column[1] == "opacity" and column[2] == "file":
+                        self.haze_opacity_data_file = column[4]
+
+                    elif column[0] == "haze" and column[1] == "profile" and column[2] == "file":
+                        self.haze_profile_data_file = column[4]
 
                     # photochemical kinetics coupling
                     elif column[0] == "coupling" and column[1] == "mode":
@@ -1306,6 +1321,7 @@ class Read(object):
                         elif self.temp_format == 'PT':
                             file_press.append(quant.fl_prec(column[0]))
                             file_temp.append(quant.fl_prec(column[1]))
+
             except IOError:
                 print("ABORT - TP file not found!")
                 raise SystemExit()
@@ -1644,7 +1660,20 @@ class Read(object):
                     if quant.iso == 0:
                         quant.species_list[s].scat_cross_sect_interface = npy.array(quant.species_list[s].scat_cross_sect_pretab * quant.ninterface, quant.fl_prec)
 
+    def read_haze_opacity_data(self, quant):
+        raise NotImplementedError
+
+    def read_haze_profiles_data(self, quant):
+        raise NotImplementedError
+
+    def read_haze_files(self, quant):
+        self.read_haze_opacity_data(quant)
+        self.read_haze_profiles_data(quant)
+
+
 
 if __name__ == "__main__":
     print("This module is for reading stuff. "
-          "...stuff like the input file, or the opacity container, or the 'Lord of the Rings' by J. R. R. Tolkien.")
+          "...stuff like the input file, or the opacity container, or the "
+          "'Lord of the Rings' by J. R. R. Tolkien."
+          )

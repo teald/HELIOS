@@ -363,6 +363,11 @@ class Store(object):
         self.dev_c_prime = None
         self.dev_d_prime = None
 
+        # Haze data
+        self.haze_cross_sections = None
+        self.ndensity_haze = None
+        self.radius_haze = None
+
     def convert_input_list_to_array(self):
         """ converts lists of quantities to arrays """
 
