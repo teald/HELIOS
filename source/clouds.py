@@ -251,8 +251,3 @@ class Cloud(object):
                 self.add_individual_cloud_decks_to_total(quant)
 
             self.normalize_g_0(quant)
-
-
-if __name__ == "__main__":
-    print("This module takes care of the ugly cloud business. "
-          "It is dusty and quite foggy in here. Enter upon own risk.")

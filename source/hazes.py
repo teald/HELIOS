@@ -21,7 +21,8 @@
 import numpy as np
 from scipy.interpolate import interpn as interpolate
 import json
-from source import clouds
+from source import clouds, quantities
+from source import tools as tls
 
 
 class Haze(clouds.Cloud):
@@ -35,8 +36,8 @@ class Haze(clouds.Cloud):
     # Note: not initializing the Cloud class itself; we don't want the data or
     # attrs, just the methods.
     def __init__(self,
-                 haze_profiles:  str | None = None,
-                 haze_datafiles: str | None = None
+                 haze_profiles:  str = '',
+                 haze_datafiles: str = ''
                  ):
         '''Initiailizes the Haze object with profiles and datafiles.
 
@@ -44,7 +45,7 @@ class Haze(clouds.Cloud):
         of its functionality.
         '''
         if not haze_profiles:
-            haze_profiles = self._default_haze_profile
+            haze_profiles = self._default_haze_profiles
 
         if not haze_datafiles:
             haze_datafiles = self._default_haze_datafiles
@@ -56,6 +57,31 @@ class Haze(clouds.Cloud):
         self.read_haze_data()
         self.read_profile_data()
 
+    def haze_pre_processing(self, quant: quantities.Store):
+        '''This goes through a similar process to what the clouds.Cloud object
+        goes through during pre-processing, but without some of the
+        cloud-specific handling.
+        '''
+        # This protects issues that might arise from clouds not pre-processing
+        # (though they should still be preprocessed as of right now, could be
+        # unexpected behavior...
+        if quant.f_all_clouds_lay is None:
+            quant.f_all_clouds_lay = np.zeros(quant.nlayer)
+            quant.f_all_clouds_int = np.zeros(quant.ninterface)
+
+            quant.abs_cross_all_clouds_lay = np.zeros(quant.nlayer * quant.nbin)
+            quant.abs_cross_all_clouds_int = np.zeros(quant.ninterface * quant.nbin)
+
+            quant.scat_cross_all_clouds_lay = np.zeros(quant.nlayer * quant.nbin)
+            quant.scat_cross_all_clouds_int = np.zeros(quant.ninterface * quant.nbin)
+
+            quant.g_0_all_clouds_lay = np.zeros(quant.nlayer * quant.nbin)
+            quant.g_0_all_clouds_int = np.zeros(quant.ninterface * quant.nbin)
+
+        # Calculate the absorption and scattering cross sections.
+
+        # Process arrays to look like cloud inputs.
+
     @property
     def input_files(self):
         return {
@@ -64,7 +90,10 @@ class Haze(clouds.Cloud):
                 }
 
     def read_profile_data(self):
-        '''Read in the pressure, number density, radius profile'''
+        '''Read in the pressure, number density, radius profile.
+
+        Remember that the units are pure cgs.
+        '''
         self.pressure = []
         self.number_density = []
         self.radius_profile = []
@@ -82,12 +111,15 @@ class Haze(clouds.Cloud):
                 self.number_density.append(cols[1])
                 self.radius_profile.append(cols[2])
 
-        self.pressure = np.array(self.pressure)
-        self.number_density = np.array(self.number_density)
-        self.radius_profile = np.array(self.radius_profile)
+        self.pressure = np.array(self.pressure, dtype=float)
+        self.number_density = np.array(self.number_density, dtype=float)
+        self.radius_profile = np.array(self.radius_profile, dtype=float)
 
     def read_haze_data(self):
-        '''Read in data about the optical properties of the haze particles.'''
+        '''Read in data about the optical properties of the haze particles.
+
+        Remember that the units are all pure cgs.
+        '''
         # This is hardcoded using .json, which isn't ideal since the community
         # generally uses different formating.
         with open(self.haze_datafiles, 'r') as infile:
@@ -109,25 +141,18 @@ class Haze(clouds.Cloud):
             self.df.append(d['DF'])
             self.nmon.append(d['NMON'])
             self.wavelength.append(d['WAVELENGTH'])
-            self.q_extinction.append(d['Q_EXCTINTION'])
+            self.q_extinction.append(d['Q_EXTINCTION'])
             self.q_scattering.append(d['Q_SCATTERING'])
             self.assym_param.append(d['ASYMMETRY PARAMETER'])
 
-        self.particle_radius = np.array(self.particle_radius)
-        self.monomer_radius = np.array(self.monomer_radius)
-        self.df = np.array(self.df)
-        self.nmon = np.array(self.nmon)
-        self.wavelength = np.array(self.wavelength)
-        self.q_extinction = np.array(self.q_extinction)
-        self.q_scattering = np.array(self.q_scattering)
-        self.assym_param = np.array(self.assym_param)
-
-    @property
-    def helios_spec(self):
-        '''Interpolates the data onto the HELIOS wavelength grid, returning a
-        new Haze object.
-        '''
-        raise NotImplementedError
+        self.particle_radius = np.array(self.particle_radius, dtype=float)
+        self.monomer_radius = np.array(self.monomer_radius, dtype=float)
+        self.df = np.array(self.df, dtype=float)
+        self.nmon = np.array(self.nmon, dtype=float)
+        self.wavelength = np.array(self.wavelength, dtype=float)
+        self.q_extinction = np.array(self.q_extinction, dtype=float)
+        self.q_scattering = np.array(self.q_scattering, dtype=float)
+        self.assym_param = np.array(self.assym_param, dtype=float)
 
     @property
     def n_wl(self) -> int:
