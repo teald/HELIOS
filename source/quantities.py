@@ -364,6 +364,8 @@ class Store(object):
         self.dev_d_prime = None
 
         # Haze data
+        self.haze_opacity_data_dir = None
+        self.haze_profile_data_file = None
         self.haze_cross_sections = None
         self.ndensity_haze = None
         self.radius_haze = None

@@ -46,7 +46,7 @@ def run_helios():
 
     # read input files and do preliminary calculations, like setting up the
     # grid, etc.
-    reader.read_param_file_and_command_line(keeper, fogger)
+    reader.read_param_file_and_command_line(keeper, fogger, smogger)
 
     if keeper.opacity_mixing == "premixed":
         reader.load_premixed_opacity_table(keeper)

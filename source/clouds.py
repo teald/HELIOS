@@ -115,9 +115,29 @@ class Cloud(object):
             weighted_g_0_mie.append(g_0)
 
         # interpolate to HELIOS wavelength grid
-        self.abs_cross_one_cloud = tls.convert_spectrum(self.lamda_mie, weighted_abs_cross_mie, quant.opac_wave, int_lambda=quant.opac_interwave, type='log')
-        self.scat_cross_one_cloud = tls.convert_spectrum(self.lamda_mie, weighted_scat_cross_mie, quant.opac_wave, int_lambda=quant.opac_interwave, type='log')
-        self.g_0_one_cloud = tls.convert_spectrum(self.lamda_mie, weighted_g_0_mie, quant.opac_wave, int_lambda=quant.opac_interwave, type='linear')
+        self.abs_cross_one_cloud = tls.convert_spectrum(
+                self.lamda_mie,
+                weighted_abs_cross_mie,
+                quant.opac_wave,
+                int_lambda=quant.opac_interwave,
+                type='log'
+                )
+
+        self.scat_cross_one_cloud = tls.convert_spectrum(
+                self.lamda_mie,
+                weighted_scat_cross_mie,
+                quant.opac_wave,
+                int_lambda=quant.opac_interwave,
+                type='log'
+                )
+
+        self.g_0_one_cloud = tls.convert_spectrum(
+                self.lamda_mie,
+                weighted_g_0_mie,
+                quant.opac_wave,
+                int_lambda=quant.opac_interwave,
+                type='linear'
+                )
 
     def create_cloud_deck(self, nr, quant):
 

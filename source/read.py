@@ -22,7 +22,7 @@
 import os
 import datetime
 import h5py
-import numpy as npy
+import numpy as np
 from scipy import interpolate
 import argparse
 from source import phys_const as pc
@@ -89,7 +89,7 @@ class Read(object):
         self.fastchem_n_p = None
 
         # Haze
-        self.haze_opacity_data_file = None
+        self.haze_opacity_data_dir = None
         self.haze_profile_data_file = None
 
     @staticmethod
@@ -105,11 +105,11 @@ class Read(object):
     def __read_yes_no__(var):
         """ transforms yes to 1 and no to zero """
         if var == "yes":
-            value = npy.int32(1)
+            value = np.int32(1)
         elif var == "no":
-            value = npy.int32(0)
+            value = np.int32(0)
         elif var == "special":
-            value = npy.int32(2)
+            value = np.int32(2)
         else:
             print("\nWARNING: Weird value found in input file. "
                   "\nCheck that all (yes/no) parameters do have \"yes\" or \"no\" as value. "
@@ -123,19 +123,19 @@ class Read(object):
         """ sets the realtime plotting parameters """
 
         if var == "yes":
-            real_plot = npy.int32(1)
-            n_plot = npy.int32(10)
+            real_plot = np.int32(1)
+            n_plot = np.int32(10)
         elif var == "no":
-            real_plot = npy.int32(0)
-            n_plot = npy.int32(10)
+            real_plot = np.int32(0)
+            n_plot = np.int32(10)
         else:
             try:
                 if float(var) >= 1:
-                    real_plot = npy.int32(1)
-                    n_plot = npy.int32(var)
+                    real_plot = np.int32(1)
+                    n_plot = np.int32(var)
                 else:
-                    real_plot = npy.int32(0)
-                    n_plot = npy.int32(10)
+                    real_plot = np.int32(0)
+                    n_plot = np.int32(10)
             except:
                 print("\nInvalid choice for realtime plotting. Aborting...")
                 raise SystemExit()
@@ -146,10 +146,10 @@ class Read(object):
         """ sets the realtime plotting parameters """
 
         if input == "no":
-            output = npy.float64(0)
+            output = np.float64(0)
 
         else:
-            output = npy.float64(input)
+            output = np.float64(input)
 
             if output < 0:
                 raise ValueError("ERROR: Timestep must be larger than zero. Please double-check your input.")
@@ -161,10 +161,10 @@ class Read(object):
         """ sets the correct precision for floating point numbers """
 
         if quant.prec == "single":
-            quant.fl_prec = npy.float32
+            quant.fl_prec = np.float32
             quant.nr_bytes = 4
         elif quant.prec == "double":
-            quant.fl_prec = npy.float64
+            quant.fl_prec = np.float64
             quant.nr_bytes = 8
         else:
             print("\nInvalid choice of precision. Aborting...")
@@ -211,9 +211,8 @@ class Read(object):
             os.system("python3 helios.py")  # recompile and restart program
             raise SystemExit()  # prevent old program from resuming at the end
 
-    def read_param_file_and_command_line(self, quant, cloud):
+    def read_param_file_and_command_line(self, quant, cloud, haze):
         """ reads the input file and command line options """
-
         # setting up command line options
         parser = argparse.ArgumentParser(description=
                                          "The following are the possible command-line parameters for HELIOS")
@@ -286,7 +285,7 @@ class Read(object):
         parser.add_argument('-cloud_to_gas_scale_height_ratio', help='see documentation (https://heliosexo.readthedocs.io/en/latest/)', required=False)
 
         # hazes
-        parser.add_argument('-haze_opacity', help='Path to the haze opacity file.', required=False)
+        parser.add_argument('-haze_opacity', help='Path to the haze cross sectiondirectory.', required=False)
         parser.add_argument('-haze_profile', help='Path to the haze profile file containing number density and radius profiles.', required=False)
 
         # photochemical kinetics coupling
@@ -361,10 +360,10 @@ class Read(object):
 
                     # grid
                     elif column[0] == "TOA" and column[1] == "pressure":
-                        quant.p_toa = npy.float64(column[5])
+                        quant.p_toa = np.float64(column[5])
 
                     elif column[0] == "BOA" and column[1] == "pressure":
-                        quant.p_boa = npy.float64(column[5])
+                        quant.p_boa = np.float64(column[5])
 
                     # iteration
                     elif column[0] == "run" and column[1] == "type":
@@ -385,13 +384,13 @@ class Read(object):
                         quant.dir_beam = self.__read_yes_no__(column[4])
 
                     elif column[2] == "f" and column[3] == "factor":
-                        quant.f_factor = npy.float64(column[5])
+                        quant.f_factor = np.float64(column[5])
 
                     elif column[2] == "stellar" and column[3] == "zenith":
-                        zenith_angle = npy.float64(column[7])
+                        zenith_angle = np.float64(column[7])
 
                     elif column[0] == "internal" and column[1] == "temperature":
-                        quant.T_intern = npy.float64(column[4])
+                        quant.T_intern = np.float64(column[4])
 
                     elif column[0] == "surface" and column[1] == "albedo":
                         self.input_surf_albedo = column[3]
@@ -458,23 +457,23 @@ class Read(object):
                         quant.planet = column[2]
 
                     elif column[2] == "surface" and column[3] == "gravity":
-                        quant.g = npy.float64(column[7])
+                        quant.g = np.float64(column[7])
 
                     elif column[2] == "orbital" and column[3] == "distance":
-                        quant.a = npy.float64(column[6])
+                        quant.a = np.float64(column[6])
 
                     elif column[2] == "radius" and column[3] == "planet":
-                        quant.R_planet = npy.float64(column[6])
+                        quant.R_planet = np.float64(column[6])
 
                     elif column[2] == "radius" and column[3] == "star":
-                        quant.R_star = npy.float64(column[6])
+                        quant.R_star = np.float64(column[6])
 
                     elif column[2] == "temperature" and column[3] == "star":
-                        quant.T_star = npy.float64(column[6])
+                        quant.T_star = np.float64(column[6])
 
                     # clouds
                     elif column[0] == "number" and column[3] == "decks":
-                        cloud.nr_cloud_decks = npy.int32(column[5])
+                        cloud.nr_cloud_decks = np.int32(column[5])
 
                     elif column[0] == "path" and column[2] == "Mie":
                         cloud.mie_path = []
@@ -484,12 +483,12 @@ class Read(object):
                     elif column[0] == "aerosol" and column[2] == "mode":
                         cloud.cloud_r_mode = []
                         for i in range(cloud.nr_cloud_decks):
-                            cloud.cloud_r_mode.append(npy.float64(column[5 + i]))
+                            cloud.cloud_r_mode.append(np.float64(column[5 + i]))
 
                     elif column[0] == "aerosol" and column[3] == "std":
                         cloud.cloud_r_std_dev = []
                         for i in range(cloud.nr_cloud_decks):
-                            cloud.cloud_r_std_dev.append(npy.float64(column[6 + i]))
+                            cloud.cloud_r_std_dev.append(np.float64(column[6 + i]))
 
                     elif column[0] == "cloud" and column[1] == "mixing":
                         cloud.cloud_mixing_ratio_setting = column[4]
@@ -512,26 +511,26 @@ class Read(object):
                         cloud.p_cloud_bot = []
                         if cloud.cloud_mixing_ratio_setting == "manual":
                             for i in range(cloud.nr_cloud_decks):
-                                cloud.p_cloud_bot.append(npy.float64(column[8 + i]))
+                                cloud.p_cloud_bot.append(np.float64(column[8 + i]))
 
                     elif column[2] == "cloud" and column[3] == "bottom" and column[4] == "mixing":
                         cloud.f_cloud_bot = []
                         if cloud.cloud_mixing_ratio_setting == "manual":
                             for i in range(cloud.nr_cloud_decks):
-                                cloud.f_cloud_bot.append(npy.float64(column[7 + i]))
+                                cloud.f_cloud_bot.append(np.float64(column[7 + i]))
 
                     elif column[2] == "cloud" and column[7] == "ratio":
                         cloud.cloud_to_gas_scale_height = []
                         if cloud.cloud_mixing_ratio_setting == "manual":
                             for i in range(cloud.nr_cloud_decks):
-                                cloud.cloud_to_gas_scale_height.append(npy.float64(column[9 + i]))
+                                cloud.cloud_to_gas_scale_height.append(np.float64(column[9 + i]))
 
                     # Haze files
-                    elif column[0] == "haze" and column[1] == "opacity" and column[2] == "file":
-                        self.haze_opacity_data_file = column[4]
+                    elif column[0] == "haze" and column[1] == "cross" and column[2] == "section":
+                        haze.haze_opacity_data_dir = column[4]
 
                     elif column[0] == "haze" and column[1] == "profile" and column[2] == "file":
-                        self.haze_profile_data_file = column[4]
+                        haze.haze_profile_data_file = column[4]
 
                     # photochemical kinetics coupling
                     elif column[0] == "coupling" and column[1] == "mode":
@@ -547,7 +546,7 @@ class Read(object):
                         quant.coupling_speed_up = self.__read_yes_no__(column[6])
 
                     elif column[2] == "coupling" and column[4] == "step":
-                        quant.coupling_iter_nr = npy.int32(column[6])
+                        quant.coupling_iter_nr = np.int32(column[6])
 
                     #########################
                     ### advanced settings ###
@@ -566,7 +565,7 @@ class Read(object):
                         iso_input = column[3]
 
                     elif column[0] == "adaptive" and column[1] == "interval":
-                        quant.adapt_interval = npy.int32(column[3])
+                        quant.adapt_interval = np.int32(column[3])
 
                     elif column[0] == "TP" and column[2] == "smoothing":
                         quant.smooth = self.__read_yes_no__(column[4])
@@ -575,16 +574,16 @@ class Read(object):
                         quant.scat_corr = self.__read_yes_no__(column[5])
 
                     elif column[2] == "I2S" and column[3] == "transition":
-                        quant.i2s_transition = npy.float64(column[6])
+                        quant.i2s_transition = np.float64(column[6])
 
                     elif column[0] == "asymmetry":
-                        quant.g_0 = npy.float64(column[4])
+                        quant.g_0 = np.float64(column[4])
 
                     elif column[0] == "diffusivity":
-                        quant.diffusivity = npy.float64(column[3])
+                        quant.diffusivity = np.float64(column[3])
 
                     elif column[0] == "second" and column[1] == "Eddington":
-                        quant.epsi2 = npy.float64(column[4])
+                        quant.epsi2 = np.float64(column[4])
 
                     elif column[0] == "geometric" and column[1] == "zenith":
                         zenith_correction = column[5]
@@ -602,30 +601,30 @@ class Read(object):
                         quant.input_dampara = column[4]
 
                     elif column[0] == "plancktable" and column[1] == "dimension":
-                        quant.plancktable_dim = npy.int32(column[5])
-                        quant.plancktable_step = npy.int32(column[6])
+                        quant.plancktable_dim = np.int32(column[5])
+                        quant.plancktable_step = np.int32(column[6])
 
                     elif column[0] == "maximum" and column[3] == "iterations":
-                        quant.max_nr_iterations = npy.int32(column[5])
+                        quant.max_nr_iterations = np.int32(column[5])
 
                     elif column[0] == "radiative" and column[2] == "criterion":
-                        quant.rad_convergence_limit = npy.float64(column[4])
+                        quant.rad_convergence_limit = np.float64(column[4])
 
                     elif column[0] == "relax" and column[2] == "criterion":
                         quant.crit_relaxation_numbers = []
                         i = 5
                         while column[i] != "[two":
-                            quant.crit_relaxation_numbers.append(npy.int32(float(column[i])))
+                            quant.crit_relaxation_numbers.append(np.int32(float(column[i])))
                             i += 1
 
                     elif column[0] == "number" and column[2] == "prerun":
-                        quant.foreplay = npy.int32(column[5])
+                        quant.foreplay = np.int32(column[5])
 
                     elif column[0] == "physical" and column[1] == "timestep":
                         quant.physical_tstep = self.read_physical_timestep(column[4])
 
                     elif column[2] == "runtime" and column[3] == "limit":
-                        quant.runtime_limit = npy.float64(column[6])
+                        quant.runtime_limit = np.float64(column[6])
 
                     elif column[2] == "start" and column[5] == "TP":
                         quant.force_start_tp_from_file = self.__read_yes_no__(column[8])
@@ -641,13 +640,13 @@ class Read(object):
                         quant.add_heating_file_press_name = column[7]
                         quant.add_heating_file_press_unit = column[8]
                         quant.add_heating_file_data_name = column[9]
-                        quant.add_heating_file_data_conv_factor = npy.float64(column[10])
+                        quant.add_heating_file_data_conv_factor = np.float64(column[10])
 
                     elif column[0] == "coupling" and column[2] == "write" and column[3] == "TP":
                         write_tp_during_run = column[8]
 
                     elif column[0] == "coupling" and column[2] == "convergence":
-                        quant.coupl_convergence_limit = npy.float64(column[5])
+                        quant.coupl_convergence_limit = np.float64(column[5])
 
         # second, reading command-line options (note: will overwrite settings in param.dat because they are read later)
 
@@ -673,10 +672,10 @@ class Read(object):
 
         # grid
         if args.toa_pressure:
-            quant.p_toa = npy.float64(args.toa_pressure)
+            quant.p_toa = np.float64(args.toa_pressure)
 
         if args.boa_pressure:
-            quant.p_boa = npy.float64(args.boa_pressure)
+            quant.p_boa = np.float64(args.boa_pressure)
 
         # iteration
         if args.run_type:
@@ -693,13 +692,13 @@ class Read(object):
             quant.dir_beam = self.__read_yes_no__(args.direct_irradiation_beam)
 
         if args.f_factor:
-            quant.f_factor = npy.float64(args.f_factor)
+            quant.f_factor = np.float64(args.f_factor)
 
         if args.stellar_zenith_angle:
-            zenith_angle = npy.float64(args.stellar_zenith_angle)
+            zenith_angle = np.float64(args.stellar_zenith_angle)
 
         if args.internal_temperature:
-            quant.T_intern = npy.float64(args.internal_temperature)
+            quant.T_intern = np.float64(args.internal_temperature)
 
         if args.surface_albedo:
             self.input_surf_albedo = args.surface_albedo
@@ -756,32 +755,32 @@ class Read(object):
             quant.planet = args.planet
 
         if args.surface_gravity:
-            quant.g = npy.float64(args.surface_gravity)
+            quant.g = np.float64(args.surface_gravity)
 
         if args.orbital_distance:
-            quant.a = npy.float64(args.orbital_distance)
+            quant.a = np.float64(args.orbital_distance)
 
         if args.radius_planet:
-            quant.R_planet = npy.float64(args.radius_planet)
+            quant.R_planet = np.float64(args.radius_planet)
 
         if args.radius_star:
-            quant.R_star = npy.float64(args.radius_star)
+            quant.R_star = np.float64(args.radius_star)
 
         if args.temperature_star:
-            quant.T_star = npy.float64(args.temperature_star)
+            quant.T_star = np.float64(args.temperature_star)
 
         # clouds
         if args.number_of_cloud_decks:
-            cloud.nr_cloud_decks = npy.int32(args.number_of_cloud_decks)
+            cloud.nr_cloud_decks = np.int32(args.number_of_cloud_decks)
 
         if args.path_to_mie_files:
             cloud.mie_path = [args.path_to_mie_files]
 
         if args.aerosol_radius_mode:
-            cloud.cloud_r_mode = [npy.float64(args.aerosol_radius_mode)]
+            cloud.cloud_r_mode = [np.float64(args.aerosol_radius_mode)]
 
         if args.aerosol_radius_geometric_std_dev:
-            cloud.cloud_r_std_dev = [npy.float64(args.aerosol_radius_geometric_std_dev)]
+            cloud.cloud_r_std_dev = [np.float64(args.aerosol_radius_geometric_std_dev)]
 
         if args.cloud_mixing_ratio:
             cloud.cloud_mixing_ratio_setting = args.cloud_mixing_ratio
@@ -793,13 +792,13 @@ class Read(object):
             cloud.cloud_file_species_name = [args.aerosol_name]
 
         if args.cloud_bottom_pressure:
-            cloud.p_cloud_bot = [npy.float64(args.cloud_bottom_pressure)]
+            cloud.p_cloud_bot = [np.float64(args.cloud_bottom_pressure)]
 
         if args.cloud_bottom_mixing_ratio:
-            cloud.f_cloud_bot = [npy.float64(args.cloud_bottom_mixing_ratio)]
+            cloud.f_cloud_bot = [np.float64(args.cloud_bottom_mixing_ratio)]
 
         if args.cloud_to_gas_scale_height_ratio:
-            cloud.cloud_to_gas_scale_height = [npy.float64(args.cloud_to_gas_scale_height_ratio)]
+            cloud.cloud_to_gas_scale_height = [np.float64(args.cloud_to_gas_scale_height_ratio)]
 
         # photochemical kinetics coupling
         if args.coupling_mode:
@@ -815,7 +814,7 @@ class Read(object):
             quant.coupling_speed_up = self.__read_yes_no__(args.coupling_speed_up)
 
         if args.coupling_iteration_step:
-            quant.coupling_iter_nr = npy.int32(args.coupling_iteration_step)
+            quant.coupling_iter_nr = np.int32(args.coupling_iteration_step)
 
         #########################
         ### advanced settings ###
@@ -831,7 +830,7 @@ class Read(object):
             iso_input = args.isothermal_layers
 
         if args.adaptive_interval:
-            quant.adapt_interval = npy.int32(args.adaptive_interval)
+            quant.adapt_interval = np.int32(args.adaptive_interval)
 
         if args.tp_profile_smoothing:
             quant.smooth = self.__read_yes_no__(args.tp_profile_smoothing)
@@ -840,16 +839,16 @@ class Read(object):
             quant.scat_corr = self.__read_yes_no__(args.improved_two_stream_correction)
 
         if args.i2s_transition_point:
-            quant.i2s_transition = npy.float64(args.i2s_transition_point)
+            quant.i2s_transition = np.float64(args.i2s_transition_point)
 
         if args.asymmetry_factor_g_0:
-            quant.g_0 = npy.float64(args.asymmetry_factor_g_0)
+            quant.g_0 = np.float64(args.asymmetry_factor_g_0)
 
         if args.diffusivity_factor:
-            quant.diffusivity = npy.float64(args.diffusivity_factor)
+            quant.diffusivity = np.float64(args.diffusivity_factor)
 
         if args.second_eddington_coefficient:
-            quant.epsi2 = npy.float64(args.second_eddington_coefficient)
+            quant.epsi2 = np.float64(args.second_eddington_coefficient)
 
         if args.geometric_zenith_angle_correction:
             zenith_correction = args.geometric_zenith_angle_correction
@@ -867,19 +866,19 @@ class Read(object):
             quant.input_dampara = args.convective_damping_parameter
 
         if args.maximum_number_of_iterations:
-            quant.max_nr_iterations = npy.int32(args.maximum_number_of_iterations)
+            quant.max_nr_iterations = np.int32(args.maximum_number_of_iterations)
 
         if args.radiative_equilibrium_criterion:
-            quant.rad_convergence_limit = npy.float64(args.radiative_equilibrium_criterion)
+            quant.rad_convergence_limit = np.float64(args.radiative_equilibrium_criterion)
 
         if args.number_of_prerun_timesteps:
-            quant.foreplay = npy.int32(args.number_of_prerun_timesteps)
+            quant.foreplay = np.int32(args.number_of_prerun_timesteps)
 
         if args.physical_timestep:
             quant.physical_tstep = self.read_physical_timestep(args.physical_timestep)
 
         if args.runtime_limit:
-            quant.runtime_limit = npy.float64(args.runtime_limit)
+            quant.runtime_limit = np.float64(args.runtime_limit)
 
         if args.start_from_provided_tp_profile:
             quant.force_start_tp_from_file = self.__read_yes_no__(args.start_from_provided_tp_profile)
@@ -894,31 +893,31 @@ class Read(object):
             write_tp_during_run = args.write_tp_profile_during_run
 
         if args.convergence_criterion:
-            quant.coupl_convergence_limit = npy.float64(args.convergence_criterion)
+            quant.coupl_convergence_limit = np.float64(args.convergence_criterion)
 
         # now that both the param.dat and the command-line inputs are known,
         # we can process the inputs and configure "automatic" and input dependent parameters
 
         # set run type automatization
         if quant.run_type == "iterative":
-            quant.singlewalk = npy.int32(0)
-            quant.iso = npy.int32(0)
-            quant.energy_correction = npy.int32(1)
+            quant.singlewalk = np.int32(0)
+            quant.iso = np.int32(0)
+            quant.energy_correction = np.int32(1)
         elif quant.run_type == "post-processing":
-            quant.singlewalk = npy.int32(1)
-            quant.iso = npy.int32(1)
-            quant.energy_correction = npy.int32(0)
+            quant.singlewalk = np.int32(1)
+            quant.iso = np.int32(1)
+            quant.energy_correction = np.int32(0)
 
         # zenith angle conversion
-        quant.dir_angle = npy.float64((180 - zenith_angle) * npy.pi / 180.0)
-        quant.mu_star = npy.float64(npy.cos(quant.dir_angle))
+        quant.dir_angle = np.float64((180 - zenith_angle) * np.pi / 180.0)
+        quant.mu_star = np.float64(np.cos(quant.dir_angle))
 
         # activating clouds
         if cloud.nr_cloud_decks > 0:
-            quant.clouds = npy.int32(1)
+            quant.clouds = np.int32(1)
 
         elif cloud.nr_cloud_decks == 0:
-            quant.clouds = npy.int32(0)
+            quant.clouds = np.int32(0)
         else:
             raise IOError("\nParameter Error: Number of cloud decks must be >=0. Please correct input value.")
 
@@ -936,29 +935,29 @@ class Read(object):
 
         # set number of layers and interfaces
         if quant.nlayer == "automatic":
-            quant.nlayer = npy.int32(npy.ceil(10.5 * npy.log10(quant.p_boa / quant.p_toa)))
+            quant.nlayer = np.int32(np.ceil(10.5 * np.log10(quant.p_boa / quant.p_toa)))
         else:
-            quant.nlayer = npy.int32(quant.nlayer)
+            quant.nlayer = np.int32(quant.nlayer)
 
         # decide log or no-log for surface gravity
         if quant.g < 10:
-            quant.g = npy.float64(10 ** quant.g)
+            quant.g = np.float64(10 ** quant.g)
 
         # process isothermal layers input
         if iso_input != "automatic":
             quant.iso = self.__read_yes_no__(iso_input)
 
         # get 1st Eddington coefficient from diffusivity parameter
-        quant.epsi = npy.float64(1.0/quant.diffusivity)
+        quant.epsi = np.float64(1.0/quant.diffusivity)
 
         # set zenith angle correction
         if zenith_correction != "automatic":
             quant.geom_zenith_corr = self.__read_yes_no__(zenith_correction)
         elif zenith_correction == "automatic":
             if zenith_angle > 70:
-                quant.geom_zenith_corr = npy.int32(1)
+                quant.geom_zenith_corr = np.int32(1)
             else:
-                quant.geom_zenith_corr = npy.int32(0)
+                quant.geom_zenith_corr = np.int32(0)
 
         # this is really just for people like me
         if quant.flux_calc_method == "iterative":  # because I always keep writing 'iterative' instead of 'iteration'
@@ -972,7 +971,7 @@ class Read(object):
         if write_tp_during_run == "no":
             quant.coupl_tp_write_interval = 0
         else:
-            quant.coupl_tp_write_interval = npy.int32(write_tp_during_run)
+            quant.coupl_tp_write_interval = np.int32(write_tp_during_run)
 
         # physical timestepping needs convective adjustment because it needs the c_p from there
         if quant.physical_tstep > 0 and quant.convection == 0:
@@ -989,15 +988,15 @@ class Read(object):
                   "\n\tAtmospheric pressure set to very low. "
                   "\n\tNumber of layers set to two. ")
 
-            quant.no_atmo_mode = npy.int32(1) # used in rad_temp_iter kernel
+            quant.no_atmo_mode = np.int32(1) # used in rad_temp_iter kernel
             quant.p_toa = 1e-3
             quant.p_boa = 2e-3
-            quant.scat = npy.int32(0)
-            quant.convection = npy.int32(0)
-            quant.nlayer = npy.int32(2)
+            quant.scat = np.int32(0)
+            quant.convection = np.int32(0)
+            quant.nlayer = np.int32(2)
 
         # set number of interfaces
-        quant.ninterface = npy.int32(quant.nlayer + 1)
+        quant.ninterface = np.int32(quant.nlayer + 1)
 
         # finally, since we have been introduced by now, let's do some pleasantries
         print("\n### Welcome to HELIOS! This run has the name: " + quant.name + ". Enjoy the ride! ###")
@@ -1079,14 +1078,14 @@ class Read(object):
                     quant.opac_wave = [x for x in opac_file["center wavelengths"][:]]
                 except KeyError:
                     quant.opac_wave = [x for x in opac_file["wavelengths"][:]]
-                quant.nbin = npy.int32(len(quant.opac_wave))
+                quant.nbin = np.int32(len(quant.opac_wave))
 
                 # Gaussian y-points
                 try:
                     quant.gauss_y = [y for y in opac_file["ypoints"][:]]
                 except KeyError:
                     quant.gauss_y = [0]
-                quant.ny = npy.int32(len(quant.gauss_y))
+                quant.ny = np.int32(len(quant.gauss_y))
 
                 # interface positions of the wavelength bins
                 try:
@@ -1109,11 +1108,11 @@ class Read(object):
 
                 # temperature grid
                 quant.ktemp = [t for t in opac_file["temperatures"][:]]
-                quant.ntemp = npy.int32(len(quant.ktemp))
+                quant.ntemp = np.int32(len(quant.ktemp))
 
                 # pressure grid
                 quant.kpress = [p for p in opac_file["pressures"][:]]
-                quant.npress = npy.int32(len(quant.kpress))
+                quant.npress = np.int32(len(quant.kpress))
 
         return opac_k
 
@@ -1124,7 +1123,7 @@ class Read(object):
 
             # a constant kappa/delad value has been set manually
             try:
-                quant.input_kappa_value = npy.float64(quant.input_kappa_value)
+                quant.input_kappa_value = np.float64(quant.input_kappa_value)
 
             except ValueError:
 
@@ -1176,36 +1175,36 @@ class Read(object):
                                 quant.entr_entropy.append(10**quant.fl_prec(column[4]))
                                 quant.entr_phase_number.append(quant.fl_prec(column[7]))
 
-                quant.entr_press = npy.sort(list(set(quant.entr_press)))
-                quant.entr_temp = npy.sort(list(set(quant.entr_temp)))
-                quant.entr_npress = npy.int32(len(quant.entr_press))
-                quant.entr_ntemp = npy.int32(len(quant.entr_temp))
+                quant.entr_press = np.sort(list(set(quant.entr_press)))
+                quant.entr_temp = np.sort(list(set(quant.entr_temp)))
+                quant.entr_npress = np.int32(len(quant.entr_press))
+                quant.entr_ntemp = np.int32(len(quant.entr_temp))
 
                 # layer quantities will be filled (=interpolated to) later during iteration
-                quant.kappa_lay = npy.zeros(quant.nlayer, quant.fl_prec)
-                quant.c_p_lay = npy.zeros(quant.nlayer, quant.fl_prec)
+                quant.kappa_lay = np.zeros(quant.nlayer, quant.fl_prec)
+                quant.c_p_lay = np.zeros(quant.nlayer, quant.fl_prec)
 
                 if quant.iso == 0:
-                    quant.kappa_int = npy.zeros(quant.ninterface, quant.fl_prec)
+                    quant.kappa_int = np.zeros(quant.ninterface, quant.fl_prec)
 
             else:
 
-                quant.kappa_lay = npy.ones(quant.nlayer, quant.fl_prec) * npy.float64(quant.input_kappa_value)
+                quant.kappa_lay = np.ones(quant.nlayer, quant.fl_prec) * np.float64(quant.input_kappa_value)
 
                 c_p_value = pc.R_UNIV / float(quant.input_kappa_value)
 
-                quant.c_p_lay = npy.ones(quant.nlayer, quant.fl_prec) * c_p_value
+                quant.c_p_lay = np.ones(quant.nlayer, quant.fl_prec) * c_p_value
 
                 if quant.iso == 0:
-                    quant.kappa_int = npy.ones(quant.ninterface, quant.fl_prec) * float(quant.input_kappa_value)
+                    quant.kappa_int = np.ones(quant.ninterface, quant.fl_prec) * float(quant.input_kappa_value)
 
 
         # no convection -- need to prefill c_p_lay with something anyway
         else:
-            quant.c_p_lay = npy.zeros(quant.nlayer, quant.fl_prec)
-            quant.kappa_lay = npy.zeros(quant.nlayer, quant.fl_prec)
+            quant.c_p_lay = np.zeros(quant.nlayer, quant.fl_prec)
+            quant.kappa_lay = np.zeros(quant.nlayer, quant.fl_prec)
             if quant.iso == 0:
-                quant.kappa_int = npy.zeros(quant.ninterface, quant.fl_prec)
+                quant.kappa_int = np.zeros(quant.ninterface, quant.fl_prec)
 
     def read_star(self, quant):
         """ reads the correct stellar spectrum from the corresponding file """
@@ -1217,7 +1216,7 @@ class Read(object):
                 with h5py.File(self.stellar_path, "r") as starfile:
                     quant.starflux = [f for f in starfile[self.stellar_data_set][:]]
 
-                quant.real_star = npy.int32(1)
+                quant.real_star = np.int32(1)
                 print("\nReading", self.stellar_path + self.stellar_data_set, "as spectral model of the host star.")
 
             except KeyError:
@@ -1244,7 +1243,7 @@ class Read(object):
                 raise OverflowError("Stellar spectrum and opacity files have different lengths. Please double-check your input files.")
 
         elif self.stellar_model == "blackbody":
-            quant.starflux = npy.zeros(quant.nbin, quant.fl_prec)
+            quant.starflux = np.zeros(quant.nbin, quant.fl_prec)
             print("\nUsing blackbody flux for the stellar irradiation.")
 
         else:
@@ -1255,7 +1254,7 @@ class Read(object):
 
         if self.input_surf_albedo == "file":
 
-            albedo_file = npy.genfromtxt(self.albedo_file, names=True, dtype=None, skip_header=self.albedo_file_header_lines)
+            albedo_file = np.genfromtxt(self.albedo_file, names=True, dtype=None, skip_header=self.albedo_file_header_lines)
 
             lamda_orig = albedo_file[self.albedo_file_wavelength_name]
 
@@ -1276,13 +1275,13 @@ class Read(object):
             self.input_surf_albedo = max(1e-8, min(0.999, self.input_surf_albedo))
             # everything above 0.999 albedo is not physical. fullstop. lower boundary is for matrix method to work.
 
-            quant.surf_albedo = npy.ones(quant.nbin) * self.input_surf_albedo
+            quant.surf_albedo = np.ones(quant.nbin) * self.input_surf_albedo
 
     @staticmethod
     def interpolate_to_own_press(old_press, old_array, new_press):
 
-        new_array = interpolate.interp1d(npy.log10(old_press), old_array, bounds_error=False,
-                                         fill_value=(old_array[-1], old_array[0]))(npy.log10(new_press))
+        new_array = interpolate.interp1d(np.log10(old_press), old_array, bounds_error=False,
+                                         fill_value=(old_array[-1], old_array[0]))(np.log10(new_press))
 
         return new_array
 
@@ -1428,14 +1427,14 @@ class Read(object):
 
         try:
 
-            self.fastchem_data = npy.genfromtxt(self.fastchem_path + 'chem.dat',
+            self.fastchem_data = np.genfromtxt(self.fastchem_path + 'chem.dat',
                                                 names=True, dtype=None, skip_header=0, deletechars=" !#$%&'()*,./:;<=>?@[\]^{|}~")
         except OSError:
 
-            self.fastchem_data_low = npy.genfromtxt(self.fastchem_path + 'chem_low.dat',
+            self.fastchem_data_low = np.genfromtxt(self.fastchem_path + 'chem_low.dat',
                                                     names=True, dtype=None, skip_header=0, deletechars=" !#$%&'()*,./:;<=>?@[\]^{|}~")
 
-            self.fastchem_data_high = npy.genfromtxt(self.fastchem_path + 'chem_high.dat',
+            self.fastchem_data_high = np.genfromtxt(self.fastchem_path + 'chem_high.dat',
                                                      names=True, dtype=None, skip_header=0, deletechars=" !#$%&'()*,./:;<=>?@[\]^{|}~")
 
         # temperature and pressure from the chemical grid
@@ -1443,8 +1442,8 @@ class Read(object):
             read_press = self.fastchem_data['Pbar']
             read_temp = self.fastchem_data['Tk']
         else:
-            read_press = npy.concatenate((self.fastchem_data_low['Pbar'], self.fastchem_data_high['Pbar']))
-            read_temp = npy.concatenate((self.fastchem_data_low['Tk'], self.fastchem_data_high['Tk']))
+            read_press = np.concatenate((self.fastchem_data_low['Pbar'], self.fastchem_data_high['Pbar']))
+            read_temp = np.concatenate((self.fastchem_data_low['Tk'], self.fastchem_data_high['Tk']))
 
         read_press = list(set(read_press))
         read_press.sort()
@@ -1465,7 +1464,7 @@ class Read(object):
 
             if quant.species_list[s].source_for_vmr == "file":
 
-                vertical_vmr = npy.genfromtxt(self.vertical_vmr_file, names=True, dtype=None, skip_header=self.vertical_vmr_file_header_lines)
+                vertical_vmr = np.genfromtxt(self.vertical_vmr_file, names=True, dtype=None, skip_header=self.vertical_vmr_file_header_lines)
                 file_press_grid = vertical_vmr[self.vertical_vmr_file_press_name]
 
                 if self.vertical_vmr_file_press_units == "Pa":
@@ -1504,8 +1503,8 @@ class Read(object):
                                                                                                                       helios_press_interface)
 
                 # convert to numpy arrays so they have the correct format for copying to GPU
-                quant.species_list[s].vmr_layer = npy.array(quant.species_list[s].vmr_layer, quant.fl_prec)
-                quant.species_list[s].vmr_interface = npy.array(quant.species_list[s].vmr_interface, quant.fl_prec)
+                quant.species_list[s].vmr_layer = np.array(quant.species_list[s].vmr_layer, quant.fl_prec)
+                quant.species_list[s].vmr_interface = np.array(quant.species_list[s].vmr_interface, quant.fl_prec)
 
             # case (ii): pre-tabulated VMR is read in from FastChem. Note, this VMR is still pre-tabulated format, for the TP grid of FastChem.
             # So we are really using a pre-tabulated chemistry but interpolate on-the-fly during the Helios run
@@ -1519,19 +1518,19 @@ class Read(object):
 
                 if "CIA" not in quant.species_list[s].name:
 
-                    quant.species_list[s].vmr_layer = npy.array(npy.ones(quant.nlayer) * float(quant.species_list[s].source_for_vmr), quant.fl_prec)
+                    quant.species_list[s].vmr_layer = np.array(np.ones(quant.nlayer) * float(quant.species_list[s].source_for_vmr), quant.fl_prec)
 
                     if quant.iso == 0:
-                        quant.species_list[s].vmr_interface = npy.array(npy.ones(quant.ninterface) * float(quant.species_list[s].source_for_vmr), quant.fl_prec)
+                        quant.species_list[s].vmr_interface = np.array(np.ones(quant.ninterface) * float(quant.species_list[s].source_for_vmr), quant.fl_prec)
 
                 elif "CIA" in quant.species_list[s].name:
 
                     two_mixing_ratios = quant.species_list[s].source_for_vmr.split('&')
 
-                    quant.species_list[s].vmr_layer = npy.array(npy.ones(quant.nlayer) * float(two_mixing_ratios[0]) * float(two_mixing_ratios[1]), quant.fl_prec)
+                    quant.species_list[s].vmr_layer = np.array(np.ones(quant.nlayer) * float(two_mixing_ratios[0]) * float(two_mixing_ratios[1]), quant.fl_prec)
 
                     if quant.iso == 0:
-                        quant.species_list[s].vmr_interface = npy.array(npy.ones(quant.ninterface) * float(two_mixing_ratios[0]) * float(two_mixing_ratios[1]), quant.fl_prec)
+                        quant.species_list[s].vmr_interface = np.array(np.ones(quant.ninterface) * float(two_mixing_ratios[0]) * float(two_mixing_ratios[1]), quant.fl_prec)
 
     @staticmethod
     def read_vertical_vmr_and_interpolate_to_helios_press_grid(vmr_file, species, file_press, helios_press):
@@ -1576,13 +1575,52 @@ class Read(object):
             vertical_vmr = [vertical_vmr_1[i] * vertical_vmr_2[i] for i in range(len(vertical_vmr_1))]
 
         # get logarithm of pressure because makes more sense for interpolation
-        log_file_press = [npy.log10(p) for p in file_press]
-        log_helios_press = [npy.log10(p) for p in helios_press]
+        log_file_press = [np.log10(p) for p in file_press]
+        log_helios_press = [np.log10(p) for p in helios_press]
 
         helios_vmr = interpolate.interp1d(log_file_press, vertical_vmr, kind='linear', bounds_error=False,
                                           fill_value=(vertical_vmr[-1], vertical_vmr[0]))(log_helios_press)
 
         return helios_vmr
+
+    @staticmethod
+    def read_haze_vert_density_and_interpolate_to_helios_press_grid(
+            profile_file,
+            helios_press
+            ):
+        '''Reads in a verticle haze profile and interpolates it onto the helios
+        pressure grid.
+
+        Unlike the similar function for vertical mixing ratios, this will
+        return a rebinned array of densityies and a rebinned array of particle
+        radii for the model.
+        '''
+        all_data = np.genfromtxt(profile_file, skip_header=1)
+
+        press = all_data[:, 0]
+        ndens = all_data[:, 1]
+        radius = all_data[:, 2]
+
+        log_file_press = np.log10(press)
+        log_helios_press = np.log10(helios_press)
+
+        hd = interpolate.interp1d(
+                ndens,
+                log_file_press,
+                bounds_error=False,
+                fill_value=(ndens[0], ndens[-1])
+                )
+        hr = interpolate.interp1d(
+                radius,
+                log_file_press,
+                bounds_error=False,
+                fill_value=(radius[0], radius[-1])
+                )
+
+        helios_ndens = hd(log_helios_press)
+        helios_radius = hr(log_helios_press)
+
+        return helios_ndens, helios_radius
 
     def read_fastchem_vmr_and_interpolate_to_opacity_PT_grid(self, quant, species):
 
@@ -1592,7 +1630,7 @@ class Read(object):
             if self.fastchem_data is not None:
                 chem_vmr = self.fastchem_data[species.fc_name]
             else:
-                chem_vmr = npy.concatenate((self.fastchem_data_low[species.fc_name], self.fastchem_data_high[species.fc_name]))
+                chem_vmr = np.concatenate((self.fastchem_data_low[species.fc_name], self.fastchem_data_high[species.fc_name]))
 
         elif ("CIA" in species.name) or (species.name == "H-_ff") or (species.name == "He-"):
 
@@ -1602,8 +1640,8 @@ class Read(object):
                 chem_vmr_1 = self.fastchem_data[two_fc_names[0]]
                 chem_vmr_2 = self.fastchem_data[two_fc_names[1]]
             else:
-                chem_vmr_1 = npy.concatenate((self.fastchem_data_low[two_fc_names[0]], self.fastchem_data_high[two_fc_names[0]]))
-                chem_vmr_2 = npy.concatenate((self.fastchem_data_low[two_fc_names[1]], self.fastchem_data_high[two_fc_names[1]]))
+                chem_vmr_1 = np.concatenate((self.fastchem_data_low[two_fc_names[0]], self.fastchem_data_high[two_fc_names[0]]))
+                chem_vmr_2 = np.concatenate((self.fastchem_data_low[two_fc_names[1]], self.fastchem_data_high[two_fc_names[1]]))
 
             chem_vmr = [chem_vmr_1[c] * chem_vmr_2[c] for c in range(len(chem_vmr_1))]
 
@@ -1643,7 +1681,7 @@ class Read(object):
                                                                                   read_grid_parameters=read_grid_params)
 
                 # convert to numpy array (necessary for GPU copying)
-                quant.species_list[s].opacity_pretab = npy.array(quant.species_list[s].opacity_pretab, quant.fl_prec)
+                quant.species_list[s].opacity_pretab = np.array(quant.species_list[s].opacity_pretab, quant.fl_prec)
 
     def read_species_scat_cross_sections(self, quant):
         for s in range(len(quant.species_list)):
@@ -1655,22 +1693,10 @@ class Read(object):
                     with h5py.File(self.opacity_path + "scat_cross_sections.h5", "r") as scatfile:
                         quant.species_list[s].scat_cross_sect_pretab = [r for r in scatfile["rayleigh_" + quant.species_list[s].name][:]]
 
-                    quant.species_list[s].scat_cross_sect_layer = npy.array(quant.species_list[s].scat_cross_sect_pretab * quant.nlayer, quant.fl_prec)
+                    quant.species_list[s].scat_cross_sect_layer = np.array(quant.species_list[s].scat_cross_sect_pretab * quant.nlayer, quant.fl_prec)
 
                     if quant.iso == 0:
-                        quant.species_list[s].scat_cross_sect_interface = npy.array(quant.species_list[s].scat_cross_sect_pretab * quant.ninterface, quant.fl_prec)
-
-    def read_haze_opacity_data(self, quant):
-        raise NotImplementedError
-
-    def read_haze_profiles_data(self, quant):
-        raise NotImplementedError
-
-    def read_haze_files(self, quant):
-        self.read_haze_opacity_data(quant)
-        self.read_haze_profiles_data(quant)
-
-
+                        quant.species_list[s].scat_cross_sect_interface = np.array(quant.species_list[s].scat_cross_sect_pretab * quant.ninterface, quant.fl_prec)
 
 if __name__ == "__main__":
     print("This module is for reading stuff. "
