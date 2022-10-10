@@ -29,6 +29,7 @@ from source import write
 from source import computation as comp
 from source import realtime_plotting as rt_plot
 from source import clouds
+from source import hazes
 from source import additional_heating as add_heat
 
 
@@ -41,8 +42,10 @@ def run_helios():
     writer = write.Write()
     plotter = rt_plot.Plot()
     fogger = clouds.Cloud()
+    smogger = hazes.Haze()
 
-    # read input files and do preliminary calculations, like setting up the grid, etc.
+    # read input files and do preliminary calculations, like setting up the
+    # grid, etc.
     reader.read_param_file_and_command_line(keeper, fogger)
 
     if keeper.opacity_mixing == "premixed":
@@ -53,7 +56,6 @@ def run_helios():
         reader.read_species_opacities(keeper)
         reader.read_species_scat_cross_sections(keeper)
         reader.read_species_mixing_ratios(keeper)
-
 
     reader.read_kappa_table_or_use_constant_kappa(keeper)
     reader.read_or_fill_surf_albedo_array(keeper)
@@ -71,6 +73,7 @@ def run_helios():
     add_heat.load_heating_terms_or_not(keeper)
 
     fogger.cloud_pre_processing(keeper)
+    smogger.haze_pre_processing(keeper)
 
     # create, convert and copy arrays to be used in the GPU computations
     keeper.create_zero_arrays()
@@ -94,7 +97,8 @@ def run_helios():
     computer.calculate_mean_opacities(keeper)
     computer.integrate_beamflux(keeper)
 
-    # copy everything from the GPU back to host and write output quantities to files
+    # copy everything from the GPU back to host and write output quantities to
+    # files
     keeper.copy_device_to_host()
     hsfunc.calculate_conv_flux(keeper)
     hsfunc.calc_F_ratio(keeper)
