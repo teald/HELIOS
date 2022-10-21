@@ -19,10 +19,12 @@
 #     <http://www.gnu.org/licenses/>.
 # ==============================================================================
 import numpy as np
+import astropy.constants as const
 from scipy.interpolate import interp2d as interpolate
 import json
 from source import clouds, quantities
 from source import tools as tls
+from source import read
 
 
 class Haze(clouds.Cloud):
@@ -35,17 +37,55 @@ class Haze(clouds.Cloud):
         super().__init__()
 
     def haze_pre_processing(self, quant):
+        # just putting a reference to quant into the object.
+        if "quant" in self.__dict__:
+            raise ValueError(
+                    "Assigning attribute 'quant' to this Haze object would "
+                    "override an existing 'quant' attribute."
+                    )
+
+        self.quant = quant
+
         opac_dir = self.haze_opacity_data_dir
         profile_file = self.haze_profile_data_file
 
-        print(opac_dir, '||', profile_file)
+        self.get_profile_data(profile_file)
 
         raise NotImplementedError
+
+    def get_profile_data(self, profile_file):
+        '''Retrieves and stores the vertical haze density and radius profiles
+        to the Haze object.
+        '''
+        helios_press = self.quant.p_lay
+
+        out = read.Read.read_haze_vert_density_and_interpolate_to_helios_press_grid(profile_file, helios_press)
+
+        self.haze_density, self.haze_radius = out
+
+        return self.haze_density, self.haze_radius
+
+    def convert_density_to_mixing_ratio(self):
+        '''Since helios' calculations generally use mixing ratios, need
+        to convert this it a mixing ratio profile.
+
+        Just doing this by taking the
+            haze density / (total density + haze density)
+        '''
+        quant = self.quant
+
+        # Get the total density of the atmosphere.
+        ndens = quant.p_lay / (const.k_B.cgs * quant.t_lay)
+
+        self.haze_mixing_ratio = self.haze_density / (ndens + self.haze_density)
+
+        self.
 
     def calc_weighted_cross_sections_with_pdf_and_interpolate_wavelengths(
             self,
             nr,
-            quant):
+            quant
+            ):
         '''Overrides the clouds.Cloud object's method of the same name to
         account for vertical haze profiles.
         '''

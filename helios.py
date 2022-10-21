@@ -73,7 +73,7 @@ def run_helios():
     add_heat.load_heating_terms_or_not(keeper)
 
     fogger.cloud_pre_processing(keeper)
-    smogger.haze_pre_processing(keeper)
+    # smogger.haze_pre_processing(keeper)
 
     # create, convert and copy arrays to be used in the GPU computations
     keeper.create_zero_arrays()
