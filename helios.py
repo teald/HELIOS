@@ -34,7 +34,7 @@ from source import additional_heating as add_heat
 
 
 def run_helios():
-    """ a full HELIOS run """
+    """a full HELIOS run"""
 
     reader = read.Read()
     keeper = quant.Store()
@@ -142,10 +142,11 @@ def run_helios():
 
 
 def main():
-    """ runs the HELIOS RT computation if this file is executed """
+    """runs the HELIOS RT computation if this file is executed"""
 
     if __name__ == "__main__":
 
         run_helios()
+
 
 main()

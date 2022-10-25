@@ -38,6 +38,10 @@ class Haze(clouds.Cloud):
         super().__init__()
 
     def haze_pre_processing(self, quant):
+        # If haze processing isn't turned on, just return
+        if not self.haze_turned_on:
+            return
+
         # just putting a reference to quant into the object.
         if "quant" in self.__dict__:
             raise ValueError(
@@ -84,7 +88,9 @@ class Haze(clouds.Cloud):
         # Get the total density of the atmosphere.
         ndens = (quant.p_lay / (const.k_B.cgs * quant.T_lay[1:])).cgs.value
 
-        self.haze_mixing_ratio = self.haze_density / (ndens + self.haze_density)
+        self.haze_mixing_ratio = self.haze_density / (
+            ndens + self.haze_density
+        )
         f_cloud_orig = self.haze_mixing_ratio
 
         log_press_orig = [np.log10(p) for p in quant.p_lay]
@@ -102,7 +108,9 @@ class Haze(clouds.Cloud):
         self.f_one_cloud_lay = cloud_interpol_function(log_p_lay)
         self.f_one_cloud_int = cloud_interpol_function(log_p_int)
 
-    def calc_weighted_cross_sections_with_pdf_and_interpolate_wavelengths(self):
+    def calc_weighted_cross_sections_with_pdf_and_interpolate_wavelengths(
+        self,
+    ):
         """Overrides the clouds.Cloud object's method of the same name to
         account for vertical haze profiles.
         """
@@ -146,7 +154,9 @@ class Haze(clouds.Cloud):
             self.lambda_mie, r_values, abs_cross_per_r, fill_value=1e-50
         )
 
-        g_0_fxn = interpolate(self.lambda_mie, r_values, g_0_per_r, fill_value=1e-50)
+        g_0_fxn = interpolate(
+            self.lambda_mie, r_values, g_0_per_r, fill_value=1e-50
+        )
 
         lambda_helios = quant.opac_wave
         lambda_helios_int = quant.opac_interwave
@@ -172,8 +182,12 @@ class Haze(clouds.Cloud):
         self.vert_scat_cross_mie = sxsec_fxn(quant.opac_wave, hzradii)
         self.vert_g_0_mie = g_0_fxn(quant.opac_wave, hzradii)
 
-        self.vert_abs_cross_mie_int = axsec_fxn(quant.opac_interwave, int_hzradii)
-        self.vert_scat_cross_mie_int = sxsec_fxn(quant.opac_interwave, int_hzradii)
+        self.vert_abs_cross_mie_int = axsec_fxn(
+            quant.opac_interwave, int_hzradii
+        )
+        self.vert_scat_cross_mie_int = sxsec_fxn(
+            quant.opac_interwave, int_hzradii
+        )
         self.vert_g_0_mie_int = g_0_fxn(quant.opac_interwave, int_hzradii)
 
         # # interpolate to HELIOS wavelength grid

@@ -28,7 +28,12 @@ from scipy import interpolate
 
 def read_heating_file(quant):
 
-    add_heat_file = np.genfromtxt(quant.add_heating_path, names=True, dtype=None, skip_header=quant.add_heating_file_header_lines)
+    add_heat_file = np.genfromtxt(
+        quant.add_heating_path,
+        names=True,
+        dtype=None,
+        skip_header=quant.add_heating_file_header_lines,
+    )
 
     press = add_heat_file[quant.add_heating_file_press_name]
 
@@ -46,7 +51,9 @@ def read_heating_file(quant):
 
     else:
 
-        raise IOError("Unknown pressure unit in additional heating file. Please double-check your input.")
+        raise IOError(
+            "Unknown pressure unit in additional heating file. Please double-check your input."
+        )
 
     heat_dens = add_heat_file[quant.add_heating_file_data_name]
 
@@ -65,8 +72,13 @@ def load_heating_terms_or_not(quant):
         log_press_orig = [np.log10(p) for p in press_orig]
         log_helios_press = [np.log10(p) for p in quant.p_lay]
 
-        heat_dens_helios = interpolate.interp1d(log_press_orig, heat_dens_orig, kind='linear', bounds_error=False,
-                                          fill_value=(heat_dens_orig[-1], heat_dens_orig[0]))(log_helios_press)
+        heat_dens_helios = interpolate.interp1d(
+            log_press_orig,
+            heat_dens_orig,
+            kind="linear",
+            bounds_error=False,
+            fill_value=(heat_dens_orig[-1], heat_dens_orig[0]),
+        )(log_helios_press)
 
         quant.add_heat_dens = heat_dens_helios
 
@@ -75,6 +87,7 @@ def load_heating_terms_or_not(quant):
         quant.add_heat_dens = np.zeros(quant.nlayer)
 
 
-
 if __name__ == "__main__":
-    print("This module adds more heating to the model. But be careful, when there is more heating there is also more cooling.")
+    print(
+        "This module adds more heating to the model. But be careful, when there is more heating there is also more cooling."
+    )

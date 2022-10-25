@@ -26,7 +26,7 @@ from source import tools as tls
 
 
 class Cloud(object):
-    """ class that reads in cloud parameters to be used in the HELIOS code """
+    """class that reads in cloud parameters to be used in the HELIOS code"""
 
     def __init__(self):
         self.nr_cloud_decks = None
@@ -51,7 +51,7 @@ class Cloud(object):
 
     @staticmethod
     def read_mie_file(mie_file):
-        """ reads an LX-Mie output file """
+        """reads an LX-Mie output file"""
 
         lamda_mie = []
         abs_cross_mie = []
@@ -62,7 +62,9 @@ class Cloud(object):
             next(mfile)
             for line in mfile:
                 column = line.split()
-                lamda_mie.append(float(column[0]) * 1e-4)  # conversion micron -> cm
+                lamda_mie.append(
+                    float(column[0]) * 1e-4
+                )  # conversion micron -> cm
                 scat_cross_mie.append(float(column[3]))
                 abs_cross_mie.append(float(column[4]))
                 g_0_mie.append(float(column[6]))
@@ -75,26 +77,38 @@ class Cloud(object):
         r_median = r_mode / np.exp(-np.log(sigma) ** 2)
 
         norm_factor = 1 / (r * np.log(sigma) * (2 * np.pi) ** 0.5)
-        pdf = norm_factor * np.exp(-0.5 * (np.log(r / r_median) / np.log(sigma)) ** 2)
+        pdf = norm_factor * np.exp(
+            -0.5 * (np.log(r / r_median) / np.log(sigma)) ** 2
+        )
 
         return pdf
 
-    def calc_weighted_cross_sections_with_pdf_and_interpolate_wavelengths(self, nr, quant):
+    def calc_weighted_cross_sections_with_pdf_and_interpolate_wavelengths(
+        self, nr, quant
+    ):
 
         # reset for each cloud
         weighted_abs_cross_mie = []
         weighted_scat_cross_mie = []
         weighted_g_0_mie = []
 
-        r_values = 10 ** np.arange(-2, 3.1, 0.1)  # WARNING: hardcoded particle sizes, WARNING: micron units
+        r_values = 10 ** np.arange(
+            -2, 3.1, 0.1
+        )  # WARNING: hardcoded particle sizes, WARNING: micron units
 
-        delta_r = r_values * (10**0.05 - 10**-0.05)  # WARNING: micron units and hardcoded particle stepsize
+        delta_r = r_values * (
+            10**0.05 - 10**-0.05
+        )  # WARNING: micron units and hardcoded particle stepsize
 
         # calc pdf for these r values
-        pdf = self.lognorm_pdf(r_values, self.cloud_r_mode[nr], self.cloud_r_std_dev[nr])
+        pdf = self.lognorm_pdf(
+            r_values, self.cloud_r_mode[nr], self.cloud_r_std_dev[nr]
+        )
 
         # get lamda values
-        self.lamda_mie, _, _, _ = self.read_mie_file(self.mie_path[nr] + "r{:.6f}.dat".format(r_values[0]))
+        self.lamda_mie, _, _, _ = self.read_mie_file(
+            self.mie_path[nr] + "r{:.6f}.dat".format(r_values[0])
+        )
 
         abs_cross_per_r = np.zeros((len(r_values), len(self.lamda_mie)))
         scat_cross_per_r = np.zeros((len(r_values), len(self.lamda_mie)))
@@ -102,7 +116,14 @@ class Cloud(object):
 
         for r in range(len(r_values)):
 
-            _, scat_cross_per_r[r, :], abs_cross_per_r[r, :], g_0_per_r[r, :] = self.read_mie_file(self.mie_path[nr] + "r{:.6f}.dat".format(r_values[r]))
+            (
+                _,
+                scat_cross_per_r[r, :],
+                abs_cross_per_r[r, :],
+                g_0_per_r[r, :],
+            ) = self.read_mie_file(
+                self.mie_path[nr] + "r{:.6f}.dat".format(r_values[r])
+            )
 
         for l in range(len(self.lamda_mie)):
 
@@ -116,28 +137,28 @@ class Cloud(object):
 
         # interpolate to HELIOS wavelength grid
         self.abs_cross_one_cloud = tls.convert_spectrum(
-                self.lamda_mie,
-                weighted_abs_cross_mie,
-                quant.opac_wave,
-                int_lambda=quant.opac_interwave,
-                type='log'
-                )
+            self.lamda_mie,
+            weighted_abs_cross_mie,
+            quant.opac_wave,
+            int_lambda=quant.opac_interwave,
+            type="log",
+        )
 
         self.scat_cross_one_cloud = tls.convert_spectrum(
-                self.lamda_mie,
-                weighted_scat_cross_mie,
-                quant.opac_wave,
-                int_lambda=quant.opac_interwave,
-                type='log'
-                )
+            self.lamda_mie,
+            weighted_scat_cross_mie,
+            quant.opac_wave,
+            int_lambda=quant.opac_interwave,
+            type="log",
+        )
 
         self.g_0_one_cloud = tls.convert_spectrum(
-                self.lamda_mie,
-                weighted_g_0_mie,
-                quant.opac_wave,
-                int_lambda=quant.opac_interwave,
-                type='linear'
-                )
+            self.lamda_mie,
+            weighted_g_0_mie,
+            quant.opac_wave,
+            int_lambda=quant.opac_interwave,
+            type="linear",
+        )
 
     def create_cloud_deck(self, nr, quant):
 
@@ -160,16 +181,25 @@ class Cloud(object):
                     break
 
             for i in range(i_bot + 1, quant.nlayer):
-                self.f_one_cloud_lay[i] = self.f_cloud_bot[nr] * (quant.p_lay[i] / quant.p_lay[i_bot]) ** (1 / self.cloud_to_gas_scale_height[nr] - 1)
+                self.f_one_cloud_lay[i] = self.f_cloud_bot[nr] * (
+                    quant.p_lay[i] / quant.p_lay[i_bot]
+                ) ** (1 / self.cloud_to_gas_scale_height[nr] - 1)
 
             if quant.iso == 0:
 
                 for i in range(i_bot + 1, quant.ninterface):
-                    self.f_one_cloud_int[i] = self.f_cloud_bot[nr] * (quant.p_int[i] / quant.p_lay[i_bot]) ** (1 / self.cloud_to_gas_scale_height[nr] - 1)
+                    self.f_one_cloud_int[i] = self.f_cloud_bot[nr] * (
+                        quant.p_int[i] / quant.p_lay[i_bot]
+                    ) ** (1 / self.cloud_to_gas_scale_height[nr] - 1)
 
         elif self.cloud_mixing_ratio_setting == "file":
 
-            cloud_file = np.genfromtxt(self.cloud_vmr_file, names=True, dtype=None, skip_header=self.cloud_vmr_file_header_lines)
+            cloud_file = np.genfromtxt(
+                self.cloud_vmr_file,
+                names=True,
+                dtype=None,
+                skip_header=self.cloud_vmr_file_header_lines,
+            )
 
             press_orig = cloud_file[self.cloud_file_press_name]
 
@@ -186,7 +216,13 @@ class Cloud(object):
             log_press_orig = [np.log10(p) for p in press_orig]
             log_p_lay = [np.log10(p) for p in quant.p_lay]
 
-            cloud_interpol_function = itp.interp1d(log_press_orig, f_cloud_orig, kind='linear', bounds_error=False, fill_value=(f_cloud_orig[-1], f_cloud_orig[0]))
+            cloud_interpol_function = itp.interp1d(
+                log_press_orig,
+                f_cloud_orig,
+                kind="linear",
+                bounds_error=False,
+                fill_value=(f_cloud_orig[-1], f_cloud_orig[0]),
+            )
 
             self.f_one_cloud_lay = cloud_interpol_function(log_p_lay)
 
@@ -205,10 +241,18 @@ class Cloud(object):
 
             for x in range(quant.nbin):
 
-                quant.abs_cross_all_clouds_lay[x + quant.nbin * i] += self.f_one_cloud_lay[i] * self.abs_cross_one_cloud[x]
-                quant.scat_cross_all_clouds_lay[x + quant.nbin * i] += self.f_one_cloud_lay[i] * self.scat_cross_one_cloud[x]
+                quant.abs_cross_all_clouds_lay[x + quant.nbin * i] += (
+                    self.f_one_cloud_lay[i] * self.abs_cross_one_cloud[x]
+                )
+                quant.scat_cross_all_clouds_lay[x + quant.nbin * i] += (
+                    self.f_one_cloud_lay[i] * self.scat_cross_one_cloud[x]
+                )
 
-                quant.g_0_all_clouds_lay[x + quant.nbin * i] += self.g_0_one_cloud[x] * self.f_one_cloud_lay[i] * self.scat_cross_one_cloud[x]
+                quant.g_0_all_clouds_lay[x + quant.nbin * i] += (
+                    self.g_0_one_cloud[x]
+                    * self.f_one_cloud_lay[i]
+                    * self.scat_cross_one_cloud[x]
+                )
 
         if quant.iso == 0:
 
@@ -218,10 +262,18 @@ class Cloud(object):
 
                 for x in range(quant.nbin):
 
-                    quant.abs_cross_all_clouds_int[x + quant.nbin * i] += self.f_one_cloud_int[i] * self.abs_cross_one_cloud[x]
-                    quant.scat_cross_all_clouds_int[x + quant.nbin * i] += self.f_one_cloud_int[i] * self.scat_cross_one_cloud[x]
+                    quant.abs_cross_all_clouds_int[x + quant.nbin * i] += (
+                        self.f_one_cloud_int[i] * self.abs_cross_one_cloud[x]
+                    )
+                    quant.scat_cross_all_clouds_int[x + quant.nbin * i] += (
+                        self.f_one_cloud_int[i] * self.scat_cross_one_cloud[x]
+                    )
 
-                    quant.g_0_all_clouds_int[x + quant.nbin * i] += self.g_0_one_cloud[x] * self.f_one_cloud_int[i] * self.scat_cross_one_cloud[x]
+                    quant.g_0_all_clouds_int[x + quant.nbin * i] += (
+                        self.g_0_one_cloud[x]
+                        * self.f_one_cloud_int[i]
+                        * self.scat_cross_one_cloud[x]
+                    )
 
     @staticmethod
     def normalize_g_0(quant):
@@ -233,7 +285,9 @@ class Cloud(object):
 
                 if quant.scat_cross_all_clouds_lay[x + quant.nbin * i] > 0:
 
-                    quant.g_0_all_clouds_lay[x + quant.nbin * i] /= quant.scat_cross_all_clouds_lay[x + quant.nbin * i]
+                    quant.g_0_all_clouds_lay[
+                        x + quant.nbin * i
+                    ] /= quant.scat_cross_all_clouds_lay[x + quant.nbin * i]
 
         if quant.iso == 0:
 
@@ -243,19 +297,27 @@ class Cloud(object):
 
                     if quant.scat_cross_all_clouds_int[x + quant.nbin * i] > 0:
 
-                        quant.g_0_all_clouds_int[x + quant.nbin * i] /= quant.scat_cross_all_clouds_int[x + quant.nbin * i]
+                        quant.g_0_all_clouds_int[
+                            x + quant.nbin * i
+                        ] /= quant.scat_cross_all_clouds_int[
+                            x + quant.nbin * i
+                        ]
 
     def cloud_pre_processing(self, quant):
-        """ conducts the pre-processing of cloud data so it can be included in the RT calculation """
+        """conducts the pre-processing of cloud data so it can be included in the RT calculation"""
 
         quant.f_all_clouds_lay = np.zeros(quant.nlayer)
         quant.f_all_clouds_int = np.zeros(quant.ninterface)
 
         quant.abs_cross_all_clouds_lay = np.zeros(quant.nlayer * quant.nbin)
-        quant.abs_cross_all_clouds_int = np.zeros(quant.ninterface * quant.nbin)
+        quant.abs_cross_all_clouds_int = np.zeros(
+            quant.ninterface * quant.nbin
+        )
 
         quant.scat_cross_all_clouds_lay = np.zeros(quant.nlayer * quant.nbin)
-        quant.scat_cross_all_clouds_int = np.zeros(quant.ninterface * quant.nbin)
+        quant.scat_cross_all_clouds_int = np.zeros(
+            quant.ninterface * quant.nbin
+        )
 
         quant.g_0_all_clouds_lay = np.zeros(quant.nlayer * quant.nbin)
         quant.g_0_all_clouds_int = np.zeros(quant.ninterface * quant.nbin)
@@ -264,7 +326,9 @@ class Cloud(object):
 
             for nr in range(self.nr_cloud_decks):
 
-                self.calc_weighted_cross_sections_with_pdf_and_interpolate_wavelengths(nr, quant)
+                self.calc_weighted_cross_sections_with_pdf_and_interpolate_wavelengths(
+                    nr, quant
+                )
 
                 self.create_cloud_deck(nr, quant)
 

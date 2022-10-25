@@ -21,7 +21,6 @@
 
 
 class Species_db(object):
-
     def __init__(self, name, fc_name, weight):
 
         self.name = name
@@ -53,7 +52,9 @@ species_lib["SO"] = Species_db(name="SO", fc_name="O1S1", weight=48.0644)
 species_lib["OH"] = Species_db(name="OH", fc_name="H1O1", weight=17.007)
 species_lib["COS"] = Species_db(name="COS", fc_name="C1O1S1", weight=60.0751)
 species_lib["CS"] = Species_db(name="CS", fc_name="C1S1", weight=44.0757)
-species_lib["HCHO"] = Species_db(name="HCHO", fc_name="H2C1O1", weight=30.02598)
+species_lib["HCHO"] = Species_db(
+    name="HCHO", fc_name="H2C1O1", weight=30.02598
+)
 species_lib["C2H4"] = Species_db(name="C2H4", fc_name="C2H4", weight=28.05316)
 species_lib["C2H2"] = Species_db(name="C2H2", fc_name="C2H2", weight=26.04)
 species_lib["CH3"] = Species_db(name="CH3", fc_name="C1H3", weight=37.04004)
@@ -71,9 +72,15 @@ species_lib["NO2"] = Species_db(name="NO2", fc_name="N1O2", weight=46.0055)
 species_lib["N2O"] = Species_db(name="N2O", fc_name="N2O1", weight=44.013)
 species_lib["HNO3"] = Species_db(name="HNO3", fc_name="H1N1O3", weight=63.01)
 species_lib["SO3"] = Species_db(name="SO3", fc_name="O3S1", weight=80.066)
-species_lib["H2SO4"] = Species_db(name="H2SO4", fc_name="H2O4S1", weight=98.0785)
+species_lib["H2SO4"] = Species_db(
+    name="H2SO4", fc_name="H2O4S1", weight=98.0785
+)
 species_lib["TiO"] = Species_db(name="TiO", fc_name="O1Ti1", weight=63.866)
-species_lib["TiH"] = Species_db(name="TiH", fc_name="TiH is not included in FastChem...sorry!", weight=48.87)
+species_lib["TiH"] = Species_db(
+    name="TiH",
+    fc_name="TiH is not included in FastChem...sorry!",
+    weight=48.87,
+)
 species_lib["VO"] = Species_db(name="VO", fc_name="O1V1", weight=66.9409)
 species_lib["SiO"] = Species_db(name="SiO", fc_name="O1Si1", weight=44.08)
 species_lib["AlO"] = Species_db(name="AlO", fc_name="Al1O1", weight=42.98)
@@ -115,11 +122,25 @@ species_lib["Fe"] = Species_db(name="Fe", fc_name="Fe", weight=55.845)
 species_lib["Zn"] = Species_db(name="Zn", fc_name="Zn", weight=65.38)
 
 # ions
-species_lib["H-_bf"] = Species_db(name="H-_bf", fc_name="H1-", weight=species_lib["H"].weight)
-species_lib["H-_ff"] = Species_db(name="H-_ff", fc_name="H&e-", weight=species_lib["H"].weight)
-species_lib["He-"] = Species_db(name="He-", fc_name="He&e-", weight=species_lib["He"].weight)
-species_lib["H3+"] = Species_db(name="H3+", fc_name="H3+ is not included in FastChem...sorry!", weight=3.02382)
-species_lib["HeH+"] = Species_db(name="HeH+", fc_name="HeH+ is not included in FastChem...sorry!", weight=5.01054)
+species_lib["H-_bf"] = Species_db(
+    name="H-_bf", fc_name="H1-", weight=species_lib["H"].weight
+)
+species_lib["H-_ff"] = Species_db(
+    name="H-_ff", fc_name="H&e-", weight=species_lib["H"].weight
+)
+species_lib["He-"] = Species_db(
+    name="He-", fc_name="He&e-", weight=species_lib["He"].weight
+)
+species_lib["H3+"] = Species_db(
+    name="H3+",
+    fc_name="H3+ is not included in FastChem...sorry!",
+    weight=3.02382,
+)
+species_lib["HeH+"] = Species_db(
+    name="HeH+",
+    fc_name="HeH+ is not included in FastChem...sorry!",
+    weight=5.01054,
+)
 species_lib["Fe+"] = Species_db(name="Fe+", fc_name="Fe1+", weight=55.845)
 species_lib["Ti+"] = Species_db(name="Ti+", fc_name="Ti1+", weight=47.867)
 
@@ -127,16 +148,34 @@ species_lib["Ti+"] = Species_db(name="Ti+", fc_name="Ti1+", weight=47.867)
 species_lib["e-"] = Species_db(name="e-", fc_name="e-", weight=5.4858e-4)
 
 # CIA pairs (Note: those come pre-calculated in opacity units (cm2/g) dividing by the weight of the 2nd collision partner in writing order)
-species_lib["CIA_H2H2"] = Species_db(name="CIA_H2H2", fc_name="H2&H2", weight=species_lib["H2"].weight)
-species_lib["CIA_H2He"] = Species_db(name="CIA_H2He", fc_name="H2&He", weight=species_lib["He"].weight)
-species_lib["CIA_CO2CO2"] = Species_db(name="CIA_CO2CO2", fc_name="C1O2&C1O2", weight=species_lib["CO2"].weight)
-species_lib["CIA_O2CO2"] = Species_db(name="CIA_O2CO2", fc_name="O2&C1O2", weight=species_lib["CO2"].weight)
-species_lib["CIA_O2O2"] = Species_db(name="CIA_O2O2", fc_name="O2&O2", weight=species_lib["O2"].weight)
-species_lib["CIA_O2N2"] = Species_db(name="CIA_O2N2", fc_name="O2&N2", weight=species_lib["N2"].weight)
-species_lib["CIA_N2N2"] = Species_db(name="CIA_N2N2", fc_name="N2&N2", weight=species_lib["N2"].weight)
-species_lib["CIA_N2H2"] = Species_db(name="CIA_N2H2", fc_name="N2&H2", weight=species_lib["H2"].weight)
+species_lib["CIA_H2H2"] = Species_db(
+    name="CIA_H2H2", fc_name="H2&H2", weight=species_lib["H2"].weight
+)
+species_lib["CIA_H2He"] = Species_db(
+    name="CIA_H2He", fc_name="H2&He", weight=species_lib["He"].weight
+)
+species_lib["CIA_CO2CO2"] = Species_db(
+    name="CIA_CO2CO2", fc_name="C1O2&C1O2", weight=species_lib["CO2"].weight
+)
+species_lib["CIA_O2CO2"] = Species_db(
+    name="CIA_O2CO2", fc_name="O2&C1O2", weight=species_lib["CO2"].weight
+)
+species_lib["CIA_O2O2"] = Species_db(
+    name="CIA_O2O2", fc_name="O2&O2", weight=species_lib["O2"].weight
+)
+species_lib["CIA_O2N2"] = Species_db(
+    name="CIA_O2N2", fc_name="O2&N2", weight=species_lib["N2"].weight
+)
+species_lib["CIA_N2N2"] = Species_db(
+    name="CIA_N2N2", fc_name="N2&N2", weight=species_lib["N2"].weight
+)
+species_lib["CIA_N2H2"] = Species_db(
+    name="CIA_N2H2", fc_name="N2&H2", weight=species_lib["H2"].weight
+)
 
 
 if __name__ == "__main__":
-    print("This module stores information about all kinds of atmospheric species. "
-          "Whether they are actually present in exoplanetary atmospheres remains to be seen.")
+    print(
+        "This module stores information about all kinds of atmospheric species. "
+        "Whether they are actually present in exoplanetary atmospheres remains to be seen."
+    )

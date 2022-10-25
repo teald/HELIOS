@@ -86,6 +86,7 @@ cloud mixing ratio =                                  manual                    
 
 === === HAZES === ===
 
+use haze =                                            yes
 haze cross section =                                  ./input/cloud_files/test_soot   [path to haze opacity file]                  (CL: Y)
 haze profile file =                                   ./input/haze_profile.dat        [path to haze number density/radius profile] (CL: Y)
 

@@ -27,7 +27,7 @@ import pycuda.gpuarray as gpuarray
 
 
 class Store(object):
-    """ class that stores parameters, quantities, arrays, etc., used in the HELIOS code """
+    """class that stores parameters, quantities, arrays, etc., used in the HELIOS code"""
 
     def __init__(self):
 
@@ -127,7 +127,6 @@ class Store(object):
         self.coupl_tp_write_interval = None
         self.coupl_convergence_limit = None
         self.max_nr_iterations = None
-
 
         # arrays/lists exclusively used on the CPU
         self.T_restart = []
@@ -369,9 +368,10 @@ class Store(object):
         self.haze_cross_sections = None
         self.ndensity_haze = None
         self.radius_haze = None
+        self.haze = None
 
     def convert_input_list_to_array(self):
-        """ converts lists of quantities to arrays """
+        """converts lists of quantities to arrays"""
 
         self.p_lay = np.array(self.p_lay, self.fl_prec)
         self.p_int = np.array(self.p_int, self.fl_prec)
@@ -397,26 +397,40 @@ class Store(object):
         self.starflux = np.array(self.starflux, self.fl_prec)
         self.T_lay = np.array(self.T_lay, self.fl_prec)
         self.surf_albedo = np.array(self.surf_albedo, self.fl_prec)
-        self.abs_cross_all_clouds_lay = np.array(self.abs_cross_all_clouds_lay, self.fl_prec)
-        self.abs_cross_all_clouds_int = np.array(self.abs_cross_all_clouds_int, self.fl_prec)
-        self.scat_cross_all_clouds_lay = np.array(self.scat_cross_all_clouds_lay, self.fl_prec)
-        self.scat_cross_all_clouds_int = np.array(self.scat_cross_all_clouds_int, self.fl_prec)
-        self.g_0_all_clouds_lay = np.array(self.g_0_all_clouds_lay, self.fl_prec)
-        self.g_0_all_clouds_int = np.array(self.g_0_all_clouds_int, self.fl_prec)
+        self.abs_cross_all_clouds_lay = np.array(
+            self.abs_cross_all_clouds_lay, self.fl_prec
+        )
+        self.abs_cross_all_clouds_int = np.array(
+            self.abs_cross_all_clouds_int, self.fl_prec
+        )
+        self.scat_cross_all_clouds_lay = np.array(
+            self.scat_cross_all_clouds_lay, self.fl_prec
+        )
+        self.scat_cross_all_clouds_int = np.array(
+            self.scat_cross_all_clouds_int, self.fl_prec
+        )
+        self.g_0_all_clouds_lay = np.array(
+            self.g_0_all_clouds_lay, self.fl_prec
+        )
+        self.g_0_all_clouds_int = np.array(
+            self.g_0_all_clouds_int, self.fl_prec
+        )
 
     def dimensions(self):
-        """ create the correct dimensions of the grid from input parameters """
+        """create the correct dimensions of the grid from input parameters"""
 
         self.nlayer_nbin = np.int32(self.nlayer * self.nbin)
-        self.nlayer_plus2_nbin = np.int32((self.nlayer+2) * self.nbin)
+        self.nlayer_plus2_nbin = np.int32((self.nlayer + 2) * self.nbin)
         self.ninterface_nbin = np.int32(self.ninterface * self.nbin)
-        self.ninterface_wg_nbin = np.int32(self.ninterface * self.ny * self.nbin)
+        self.ninterface_wg_nbin = np.int32(
+            self.ninterface * self.ny * self.nbin
+        )
         self.nlayer_wg_nbin = np.int32(self.ninterface * self.ny * self.nbin)
         self.wg_nbin = np.int32(self.ny * self.nbin)
-        self.nplanck_grid = np.int32((self.plancktable_dim+1) * self.nbin)
+        self.nplanck_grid = np.int32((self.plancktable_dim + 1) * self.nbin)
 
     def create_zero_arrays(self):
-        """ creates zero arrays of quantities to be used on the GPU with the correct length/dimension """
+        """creates zero arrays of quantities to be used on the GPU with the correct length/dimension"""
 
         self.F_up_band = np.zeros(self.ninterface_nbin, self.fl_prec)
         self.F_down_band = np.zeros(self.ninterface_nbin, self.fl_prec)
@@ -447,7 +461,9 @@ class Store(object):
         self.ross_opac_T_star = np.zeros(self.nlayer, self.fl_prec)
         self.trans_band = np.zeros(self.nlayer_nbin, self.fl_prec)
         self.delta_tau_band = np.zeros(self.nlayer_nbin, self.fl_prec)
-        self.abort = np.zeros(self.nlayer + 1, np.int32)  # "nlayer + 1", because we include surface "layer"
+        self.abort = np.zeros(
+            self.nlayer + 1, np.int32
+        )  # "nlayer + 1", because we include surface "layer"
         self.entropy_lay = np.zeros(self.nlayer, self.fl_prec)
         self.phase_number_lay = np.zeros(self.nlayer, self.fl_prec)
         self.trans_weight_band = np.zeros(self.nlayer_nbin, self.fl_prec)
@@ -468,7 +484,7 @@ class Store(object):
         self.conv_layer = np.zeros(self.nlayer + 1, np.int32)
 
     def copy_host_to_device(self):
-        """ copies relevant host arrays to device """
+        """copies relevant host arrays to device"""
 
         # input arrays
         self.dev_p_lay = gpuarray.to_gpu(self.p_lay)
@@ -497,8 +513,12 @@ class Store(object):
         self.dev_starflux = gpuarray.to_gpu(self.starflux)
         self.dev_T_lay = gpuarray.to_gpu(self.T_lay)
         self.dev_surf_albedo = gpuarray.to_gpu(self.surf_albedo)
-        self.dev_abs_cross_all_clouds_lay = gpuarray.to_gpu(self.abs_cross_all_clouds_lay)
-        self.dev_scat_cross_all_clouds_lay = gpuarray.to_gpu(self.scat_cross_all_clouds_lay)
+        self.dev_abs_cross_all_clouds_lay = gpuarray.to_gpu(
+            self.abs_cross_all_clouds_lay
+        )
+        self.dev_scat_cross_all_clouds_lay = gpuarray.to_gpu(
+            self.scat_cross_all_clouds_lay
+        )
         self.dev_g_0_all_clouds_lay = gpuarray.to_gpu(self.g_0_all_clouds_lay)
 
         # zero arrays (copying anyway to obtain the gpuarray functionality)
@@ -538,7 +558,9 @@ class Store(object):
         self.dev_g_0_tot_lay = gpuarray.to_gpu(self.g_0_tot_lay)
         self.dev_T_int = gpuarray.to_gpu(self.T_int)
         self.dev_scat_trigger = gpuarray.to_gpu(self.scat_trigger)
-        self.dev_delta_tau_all_clouds = gpuarray.to_gpu(self.delta_tau_all_clouds)
+        self.dev_delta_tau_all_clouds = gpuarray.to_gpu(
+            self.delta_tau_all_clouds
+        )
         self.dev_F_add_heat_lay = gpuarray.to_gpu(self.F_add_heat_lay)
         self.dev_F_add_heat_sum = gpuarray.to_gpu(self.F_add_heat_sum)
         self.dev_F_smooth = gpuarray.to_gpu(self.F_smooth)
@@ -550,13 +572,19 @@ class Store(object):
             self.dev_Fc_up_wg = gpuarray.to_gpu(self.Fc_up_wg)
             self.dev_Fc_dir_wg = gpuarray.to_gpu(self.Fc_dir_wg)
             self.dev_g_0_tot_int = gpuarray.to_gpu(self.g_0_tot_int)
-            self.dev_abs_cross_all_clouds_int = gpuarray.to_gpu(self.abs_cross_all_clouds_int)
-            self.dev_scat_cross_all_clouds_int = gpuarray.to_gpu(self.scat_cross_all_clouds_int)
-            self.dev_g_0_all_clouds_int = gpuarray.to_gpu(self.g_0_all_clouds_int)
+            self.dev_abs_cross_all_clouds_int = gpuarray.to_gpu(
+                self.abs_cross_all_clouds_int
+            )
+            self.dev_scat_cross_all_clouds_int = gpuarray.to_gpu(
+                self.scat_cross_all_clouds_int
+            )
+            self.dev_g_0_all_clouds_int = gpuarray.to_gpu(
+                self.g_0_all_clouds_int
+            )
             self.dev_kappa_int = gpuarray.to_gpu(self.kappa_int)
 
     def copy_device_to_host(self):
-        """ copies relevant device arrays to host """
+        """copies relevant device arrays to host"""
 
         self.delta_colmass = self.dev_delta_colmass.get()
         self.F_up_band = self.dev_F_up_band.get()
@@ -598,22 +626,26 @@ class Store(object):
             self.kappa_int = self.dev_kappa_int.get()
 
     def allocate_on_device(self):
-        """ allocate memory for arrays existing only on the GPU """
+        """allocate memory for arrays existing only on the GPU"""
 
         # mem_alloc wants the number of bytes, which is 8 bytes per value for double precision (e.g. np.float64)
         # and 4 bytes per value for single precision (e.g. np.int32, np.float32)
         # save the correct space depending on precision
 
-        size_nlayer_plus1 = int((self.nlayer+1) * self.nr_bytes)
+        size_nlayer_plus1 = int((self.nlayer + 1) * self.nr_bytes)
         size_nlayer_nbin = int(self.nlayer_nbin * self.nr_bytes)
         size_nlayer_wg_nbin = int(self.nlayer_wg_nbin * self.nr_bytes)
         size_2_nlayer_wg_nbin = int(2 * self.nlayer_wg_nbin * self.nr_bytes)
         size_nplanckgrid = int(self.nplanck_grid * self.nr_bytes)
         size_ninterface_wg_nbin = int(self.ninterface_wg_nbin * self.nr_bytes)
         if self.iso == 1:
-            size_nmatrix_wg_nbin = int(2 * self.ninterface_wg_nbin * self.nr_bytes)
+            size_nmatrix_wg_nbin = int(
+                2 * self.ninterface_wg_nbin * self.nr_bytes
+            )
         elif self.iso == 0:
-            size_nmatrix_wg_nbin = int((4 * self.ninterface_wg_nbin - 2) * self.nr_bytes)
+            size_nmatrix_wg_nbin = int(
+                (4 * self.ninterface_wg_nbin - 2) * self.nr_bytes
+            )
 
         # these arrays will never be copied between host and device.
         # Hence the normal mem_alloc functionality
@@ -650,11 +682,17 @@ class Store(object):
             self.dev_G_plus_lower = cuda.mem_alloc(size_nlayer_wg_nbin)
             self.dev_G_minus_upper = cuda.mem_alloc(size_nlayer_wg_nbin)
             self.dev_G_minus_lower = cuda.mem_alloc(size_nlayer_wg_nbin)
-            self.dev_delta_tau_all_clouds_upper = cuda.mem_alloc(size_nlayer_nbin)
-            self.dev_delta_tau_all_clouds_lower = cuda.mem_alloc(size_nlayer_nbin)
+            self.dev_delta_tau_all_clouds_upper = cuda.mem_alloc(
+                size_nlayer_nbin
+            )
+            self.dev_delta_tau_all_clouds_lower = cuda.mem_alloc(
+                size_nlayer_nbin
+            )
 
             if self.opacity_mixing == "on-the-fly":
-                self.dev_opac_spec_wg_int = cuda.mem_alloc(size_ninterface_wg_nbin)
+                self.dev_opac_spec_wg_int = cuda.mem_alloc(
+                    size_ninterface_wg_nbin
+                )
 
         # for matrix method
         if self.flux_calc_method == "matrix":
@@ -666,12 +704,16 @@ class Store(object):
             elif self.iso == 0:
                 self.dev_alpha = cuda.mem_alloc(size_2_nlayer_wg_nbin)
                 self.dev_beta = cuda.mem_alloc(size_2_nlayer_wg_nbin)
-                self.dev_source_term_down = cuda.mem_alloc(size_2_nlayer_wg_nbin)
+                self.dev_source_term_down = cuda.mem_alloc(
+                    size_2_nlayer_wg_nbin
+                )
                 self.dev_source_term_up = cuda.mem_alloc(size_2_nlayer_wg_nbin)
             self.dev_c_prime = cuda.mem_alloc(size_nmatrix_wg_nbin)
             self.dev_d_prime = cuda.mem_alloc(size_nmatrix_wg_nbin)
 
 
 if __name__ == "__main__":
-    print("This module is for storing and allocating all the necessary quantities used in HELIOS"
-          "...hopefully without memory bugs. ")
+    print(
+        "This module is for storing and allocating all the necessary quantities used in HELIOS"
+        "...hopefully without memory bugs. "
+    )

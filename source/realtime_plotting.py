@@ -26,7 +26,7 @@ import matplotlib.ticker as tkr
 
 
 class Plot(object):
-    """ class including all the plotting utensils """
+    """class including all the plotting utensils"""
 
     def __init__(self):
         self.fig = None
@@ -37,7 +37,12 @@ class Plot(object):
     def create_canvas_for_realtime_plotting(self):
 
         # set up canvas
-        self.fig, (self.ax_left, self.ax_right) = plt.subplots(nrows=1, ncols=2, gridspec_kw = {'width_ratios':[5, 4]}, figsize=(10, 5))
+        self.fig, (self.ax_left, self.ax_right) = plt.subplots(
+            nrows=1,
+            ncols=2,
+            gridspec_kw={"width_ratios": [5, 4]},
+            figsize=(10, 5),
+        )
 
         # create 2nd vertical axis
         self.ax_right2 = self.ax_right.twinx()
@@ -49,7 +54,7 @@ class Plot(object):
         self.fig.canvas.manager.show()
 
     def plot_tp_and_flux(self, quant):
-        """ plots the tp profile and the net flux in realtime """
+        """plots the tp profile and the net flux in realtime"""
 
         # set to 1 for video output
         video = 0
@@ -82,20 +87,26 @@ class Plot(object):
             fig = plt.gcf()
             fig.set_size_inches(10, 6)
 
-        self.ax_left.plot(temp_plot, nr_layer, color='cornflowerblue', linewidth=2)
-        self.ax_left.scatter(temp_plot, nr_layer, color='forestgreen', s=30)
-        self.ax_left.scatter(red_temp, red_layer, color='red', s=30)
-        self.ax_left.scatter(conv_temp, conv_layer, color='orange', s=50)
+        self.ax_left.plot(
+            temp_plot, nr_layer, color="cornflowerblue", linewidth=2
+        )
+        self.ax_left.scatter(temp_plot, nr_layer, color="forestgreen", s=30)
+        self.ax_left.scatter(red_temp, red_layer, color="red", s=30)
+        self.ax_left.scatter(conv_temp, conv_layer, color="orange", s=50)
 
-        self.ax_left.set(ylim=[-1, quant.nlayer-1], ylabel='layer index', xlabel='temperature (K)')
+        self.ax_left.set(
+            ylim=[-1, quant.nlayer - 1],
+            ylabel="layer index",
+            xlabel="temperature (K)",
+        )
 
         majorloc_y = tkr.MultipleLocator(10)
         self.ax_left.yaxis.set_major_locator(majorloc_y)
 
-        self.ax_left.xaxis.grid(True, 'minor', color='grey')
-        self.ax_left.xaxis.grid(True, 'major', color='grey')
-        self.ax_left.yaxis.grid(True, 'minor', color='grey')
-        self.ax_left.yaxis.grid(True, 'major', color='grey')
+        self.ax_left.xaxis.grid(True, "minor", color="grey")
+        self.ax_left.xaxis.grid(True, "major", color="grey")
+        self.ax_left.yaxis.grid(True, "minor", color="grey")
+        self.ax_left.yaxis.grid(True, "major", color="grey")
 
         # self.ax2.set(ylabel=r'pressure (bar)', ylim=[quant.p_boa * 1e-6, quant.p_toa * 1e-6], yscale='log')
         #
@@ -109,35 +120,63 @@ class Plot(object):
 
         fnet_plot = np.insert(quant.F_net, 0, quant.F_intern)
 
-        self.ax_right.plot(fnet_plot, nr_interface, color='cornflowerblue', linewidth=2)
-        self.ax_right.scatter(fnet_plot, nr_interface, color='forestgreen', s=30)
+        self.ax_right.plot(
+            fnet_plot, nr_interface, color="cornflowerblue", linewidth=2
+        )
+        self.ax_right.scatter(
+            fnet_plot, nr_interface, color="forestgreen", s=30
+        )
 
         for i in conv_layer:
-            self.ax_right.axhspan(i, i + 1, color='orange', alpha=0.5)
+            self.ax_right.axhspan(i, i + 1, color="orange", alpha=0.5)
         for i in red_layer:
-            self.ax_right.axhspan(i, i + 1, color='red', alpha=0.4)
+            self.ax_right.axhspan(i, i + 1, color="red", alpha=0.4)
 
-        self.ax_right.set(ylim=[-1, quant.ninterface - 1], ylabel='interface index', xlabel='rad. net flux (erg s$^{-1}$ cm$^{-2}$)')
+        self.ax_right.set(
+            ylim=[-1, quant.ninterface - 1],
+            ylabel="interface index",
+            xlabel="rad. net flux (erg s$^{-1}$ cm$^{-2}$)",
+        )
 
-        self.ax_right.vlines(quant.F_intern, -1, quant.ninterface, colors='blue', linestyles='--', linewidth=2, alpha=0.5)
+        self.ax_right.vlines(
+            quant.F_intern,
+            -1,
+            quant.ninterface,
+            colors="blue",
+            linestyles="--",
+            linewidth=2,
+            alpha=0.5,
+        )
 
         if quant.F_intern > 0:
-            self.ax_right.set(xlim=[-quant.F_intern/2, quant.F_intern*2])
+            self.ax_right.set(xlim=[-quant.F_intern / 2, quant.F_intern * 2])
 
         majorloc_y = tkr.MultipleLocator(10)
         self.ax_right.yaxis.set_major_locator(majorloc_y)
 
-        self.ax_right.xaxis.grid(True, 'minor', color='grey')
-        self.ax_right.xaxis.grid(True, 'major', color='grey')
-        self.ax_right.yaxis.grid(True, 'minor', color='grey')
-        self.ax_right.yaxis.grid(True, 'major', color='grey')
+        self.ax_right.xaxis.grid(True, "minor", color="grey")
+        self.ax_right.xaxis.grid(True, "major", color="grey")
+        self.ax_right.yaxis.grid(True, "minor", color="grey")
+        self.ax_right.yaxis.grid(True, "major", color="grey")
 
-        self.ax_right2.set(ylabel=r'pressure (bar)', ylim=[quant.p_boa * 1e-6, quant.p_toa * 1e-6], yscale='log')
+        self.ax_right2.set(
+            ylabel=r"pressure (bar)",
+            ylim=[quant.p_boa * 1e-6, quant.p_toa * 1e-6],
+            yscale="log",
+        )
 
         log10_pboa_bar = int(np.log10(quant.p_boa) - 6)
         log10_ptoa_bar = int(np.log10(quant.p_toa) - 6)
 
-        self.ax_right2.yaxis.set_major_locator(tkr.FixedLocator(locs=np.logspace(log10_pboa_bar, log10_ptoa_bar, log10_pboa_bar - log10_ptoa_bar + 1)))
+        self.ax_right2.yaxis.set_major_locator(
+            tkr.FixedLocator(
+                locs=np.logspace(
+                    log10_pboa_bar,
+                    log10_ptoa_bar,
+                    log10_pboa_bar - log10_ptoa_bar + 1,
+                )
+            )
+        )
 
         self.fig.canvas.draw()
 
@@ -152,5 +191,7 @@ class Plot(object):
 
 
 if __name__ == "__main__":
-    print("This module is for providing realtime graphical output during the iteration. "
-          "It has a kind of 'in-your-face' attitude. ")
+    print(
+        "This module is for providing realtime graphical output during the iteration. "
+        "It has a kind of 'in-your-face' attitude. "
+    )

@@ -31,7 +31,7 @@ from source import phys_const as pc
 
 
 def planet_param(quant, read):
-    """ sets the planetary, stellar and orbital parameters and converts them to the correct units """
+    """sets the planetary, stellar and orbital parameters and converts them to the correct units"""
 
     if quant.planet == "manual":
         print("\nUsing manual input for the planetary and orbital parameters.")
@@ -40,7 +40,7 @@ def planet_param(quant, read):
 
     # convert to cgs units
     if quant.g < 10:
-        quant.g = quant.fl_prec(10 ** quant.g)
+        quant.g = quant.fl_prec(10**quant.g)
     quant.a = quant.fl_prec(quant.a * pc.AU)
     quant.R_planet = quant.fl_prec(quant.R_planet * pc.R_JUP)
     quant.R_star = quant.fl_prec(quant.R_star * pc.R_SUN)
@@ -49,7 +49,7 @@ def planet_param(quant, read):
 
 
 def approx_f_from_formula(quant, read):
-    """ calculates the f redistribution factor with Eq. (10) in Koll (2021) """
+    """calculates the f redistribution factor with Eq. (10) in Koll (2021)"""
 
     # read in tau_lw from output file if it exists
     if "_post" in quant.name:
@@ -57,7 +57,14 @@ def approx_f_from_formula(quant, read):
     else:
         name = quant.name
     try:
-        with open(read.output_path + name + "/" + name + "_tau_lw_tau_sw_f_factor.dat", "r") as entr_file:
+        with open(
+            read.output_path
+            + name
+            + "/"
+            + name
+            + "_tau_lw_tau_sw_f_factor.dat",
+            "r",
+        ) as entr_file:
             next(entr_file)
             next(entr_file)
             for line in entr_file:
@@ -67,18 +74,24 @@ def approx_f_from_formula(quant, read):
         print("\ntau_lw = ", quant.tau_lw)
 
     except IOError:
-        print("\nWarning: Unable to read in tau_lw from file. Using either commandline values or starting from 1 per default.")
+        print(
+            "\nWarning: Unable to read in tau_lw from file. Using either commandline values or starting from 1 per default."
+        )
 
     # calculates the f factor via Eq.(10) in Koll (2021)
-    T_eq = (quant.R_star / (2*quant.a))**0.5 * quant.T_star
+    T_eq = (quant.R_star / (2 * quant.a)) ** 0.5 * quant.T_star
 
-    term = quant.tau_lw * (quant.p_boa / 1e6) ** (2 / 3) * (T_eq / 600) ** (-4 / 3)
+    term = (
+        quant.tau_lw
+        * (quant.p_boa / 1e6) ** (2 / 3)
+        * (T_eq / 600) ** (-4 / 3)
+    )
 
     quant.f_factor = 2 / 3 - 5 / 12 * term / (2 + term)
 
 
 def calc_planck(lamda, temp):
-    """ calculates the Planckian blackbody function at a given wavelength and temperature """
+    """calculates the Planckian blackbody function at a given wavelength and temperature"""
 
     term1 = 2 * pc.H * pc.C**2 / lamda**5
 
@@ -90,7 +103,7 @@ def calc_planck(lamda, temp):
 
 
 def calc_tau_lw_sw(quant, read):
-    """ estimates the shortwave and longwave optical depths from the TOA to BOA. This is required when using the f approximation formula of Koll et al. (2019) """
+    """estimates the shortwave and longwave optical depths from the TOA to BOA. This is required when using the f approximation formula of Koll et al. (2019)"""
 
     num_lw = 0
     denom_lw = 0
@@ -136,7 +149,9 @@ def calc_tau_lw_sw(quant, read):
 
                 tau_from_top += quant.delta_tau_band[x + i * quant.nbin]
 
-            B_surface = calc_planck(quant.opac_wave[x], quant.T_lay[quant.nlayer])
+            B_surface = calc_planck(
+                quant.opac_wave[x], quant.T_lay[quant.nlayer]
+            )
 
             num_lw += B_surface * tau_from_top * quant.opac_deltawave[x]
             denom_lw += B_surface * quant.opac_deltawave[x]
@@ -155,27 +170,56 @@ def calc_tau_lw_sw(quant, read):
         else:
             tau_sw_tot = 0
 
-    with open(read.output_path + quant.name + "/" + quant.name + "_tau_lw_tau_sw_f_factor.dat", "w") as file:
-        file.writelines("This file contains the total longwave and shortwave optical depths at BOA (=surface), tau_lw and tau_sw, and the f factor as used in the model")
-        file.writelines("\n{:<15}{:<15}{:<15}".format("tau_lw", "tau_sw", "f_factor"))
-        file.writelines("\n{:<15g}{:<15g}{:<15g}".format(tau_lw_tot, tau_sw_tot, quant.f_factor))
+    with open(
+        read.output_path
+        + quant.name
+        + "/"
+        + quant.name
+        + "_tau_lw_tau_sw_f_factor.dat",
+        "w",
+    ) as file:
+        file.writelines(
+            "This file contains the total longwave and shortwave optical depths at BOA (=surface), tau_lw and tau_sw, and the f factor as used in the model"
+        )
+        file.writelines(
+            "\n{:<15}{:<15}{:<15}".format("tau_lw", "tau_sw", "f_factor")
+        )
+        file.writelines(
+            "\n{:<15g}{:<15g}{:<15g}".format(
+                tau_lw_tot, tau_sw_tot, quant.f_factor
+            )
+        )
 
 
 def initial_temp(quant, read):
-    """ determines the initial temperature profile """
+    """determines the initial temperature profile"""
 
-    if quant.singlewalk == 0 and (quant.force_start_tp_from_file == 0 or quant.physical_tstep == 0):
+    if quant.singlewalk == 0 and (
+        quant.force_start_tp_from_file == 0 or quant.physical_tstep == 0
+    ):
 
         # calculate effective planetary temperature
-        T_eff = (1.0-quant.dir_beam) * quant.f_factor ** 0.25 * (quant.R_star / quant.a) ** 0.5 * quant.T_star \
-                + quant.dir_beam * abs(quant.mu_star) ** 0.25 * (quant.R_star / quant.a) ** 0.5 * quant.T_star
+        T_eff = (1.0 - quant.dir_beam) * quant.f_factor**0.25 * (
+            quant.R_star / quant.a
+        ) ** 0.5 * quant.T_star + quant.dir_beam * abs(
+            quant.mu_star
+        ) ** 0.25 * (
+            quant.R_star / quant.a
+        ) ** 0.5 * quant.T_star
 
         # for efficiency reasons initial temperature has a lower limit of 500 K
-        quant.T_lay = np.ones(quant.nlayer+1) * max(T_eff, 500)
+        quant.T_lay = np.ones(quant.nlayer + 1) * max(T_eff, 500)
 
-        print("\nStarting with an isothermal TP-profile at {:g}".format(max(T_eff, 500))+" K.")
+        print(
+            "\nStarting with an isothermal TP-profile at {:g}".format(
+                max(T_eff, 500)
+            )
+            + " K."
+        )
 
-    elif quant.singlewalk == 1 or (quant.force_start_tp_from_file == 1 and quant.physical_tstep != 0):
+    elif quant.singlewalk == 1 or (
+        quant.force_start_tp_from_file == 1 and quant.physical_tstep != 0
+    ):
 
         read.read_temperature_file(quant)
 
@@ -185,29 +229,46 @@ def initial_temp(quant, read):
 
 
 def temp_calcs(quant):
-    """ computes the final effective temperature """
+    """computes the final effective temperature"""
 
-    T_eff_global = 0.25 ** 0.25 * (quant.R_star / quant.a) ** 0.5 * quant.T_star
+    T_eff_global = (
+        0.25**0.25 * (quant.R_star / quant.a) ** 0.5 * quant.T_star
+    )
 
-    T_eff_dayside = 0.667 ** 0.25 * (quant.R_star / quant.a) ** 0.5 * quant.T_star
+    T_eff_dayside = (
+        0.667**0.25 * (quant.R_star / quant.a) ** 0.5 * quant.T_star
+    )
 
-    T_eff_model = (1.0 - quant.dir_beam) * quant.f_factor ** 0.25 * (quant.R_star / quant.a) ** 0.5 * quant.T_star \
-            + quant.dir_beam * abs(quant.mu_star) ** 0.25 * (quant.R_star / quant.a) ** 0.5 * quant.T_star
+    T_eff_model = (1.0 - quant.dir_beam) * quant.f_factor**0.25 * (
+        quant.R_star / quant.a
+    ) ** 0.5 * quant.T_star + quant.dir_beam * abs(quant.mu_star) ** 0.25 * (
+        quant.R_star / quant.a
+    ) ** 0.5 * quant.T_star
 
-    T_star_brightness = (quant.F_down_tot[quant.ninterface - 1] / pc.SIGMA_SB) ** 0.25
-    T_planet_brightness = (quant.F_up_tot[quant.ninterface - 1] / pc.SIGMA_SB) ** 0.25
+    T_star_brightness = (
+        quant.F_down_tot[quant.ninterface - 1] / pc.SIGMA_SB
+    ) ** 0.25
+    T_planet_brightness = (
+        quant.F_up_tot[quant.ninterface - 1] / pc.SIGMA_SB
+    ) ** 0.25
 
-    return T_eff_global, T_eff_dayside, T_eff_model, T_star_brightness, T_planet_brightness
+    return (
+        T_eff_global,
+        T_eff_dayside,
+        T_eff_model,
+        T_star_brightness,
+        T_planet_brightness,
+    )
 
 
 def calc_F_intern(quant):
-    """ calculates the internal heat flux """
+    """calculates the internal heat flux"""
 
-    quant.F_intern = pc.SIGMA_SB * quant.T_intern ** 4.0
+    quant.F_intern = pc.SIGMA_SB * quant.T_intern**4.0
 
 
 def set_up_numerical_parameters(quant):
-    """ sets up additional parameters used in the calculation """
+    """sets up additional parameters used in the calculation"""
 
     # setting upper limit for w_0 because equations are not valid for w_0 = 1
     quant.w_0_limit = quant.fl_prec(1.0 - 1e-10)
@@ -241,44 +302,62 @@ def set_up_numerical_parameters(quant):
 
 
 def relax_radiative_convergence_criterion(quant):
-    """ makes the radiative convergence criterion less strict over time """
+    """makes the radiative convergence criterion less strict over time"""
 
-    quant.rad_convergence_limit *=10.0
+    quant.rad_convergence_limit *= 10.0
 
     quant.relaxed_criterion_trigger = 1
 
 
 def check_for_radiative_eq(quant):
-    """ checks for local equilibrium during the convective iteration """
+    """checks for local equilibrium during the convective iteration"""
 
     criterion = 0
 
-    quant.converged = np.zeros(quant.nlayer+1, np.int32)
-    quant.marked_red = np.zeros(quant.nlayer+1, np.int32)
+    quant.converged = np.zeros(quant.nlayer + 1, np.int32)
+    quant.marked_red = np.zeros(quant.nlayer + 1, np.int32)
 
-    for i in range(quant.nlayer+1):  # including surface/BOA "ghost layer"
+    for i in range(quant.nlayer + 1):  # including surface/BOA "ghost layer"
 
-        if quant.T_lay[i] == 0:  # just checking whether temperatures reach zero somewhere, which they obviously shouldn't
-            print("WARNING WARNING WARNING: Found zero temperature at layer:", i, quant.T_lay[i])
+        if (
+            quant.T_lay[i] == 0
+        ):  # just checking whether temperatures reach zero somewhere, which they obviously shouldn't
+            print(
+                "WARNING WARNING WARNING: Found zero temperature at layer:",
+                i,
+                quant.T_lay[i],
+            )
 
         if quant.conv_layer[i] == 0:
 
             if i < quant.nlayer:
 
-                local_F_net_diff = abs(quant.F_intern + quant.F_add_heat_sum[i] + quant.F_smooth_sum[i] - quant.F_net[i+1])
+                local_F_net_diff = abs(
+                    quant.F_intern
+                    + quant.F_add_heat_sum[i]
+                    + quant.F_smooth_sum[i]
+                    - quant.F_net[i + 1]
+                )
 
             elif i == quant.nlayer:
 
                 local_F_net_diff = abs(quant.F_intern - quant.F_net[0])
 
             # check for criterion satisfaction
-            if local_F_net_diff < quant.rad_convergence_limit * (quant.F_down_tot[quant.nlayer] + quant.F_intern):
+            if local_F_net_diff < quant.rad_convergence_limit * (
+                quant.F_down_tot[quant.nlayer] + quant.F_intern
+            ):
                 quant.converged[i] = 1
             else:
                 quant.marked_red[i] = 1
 
     if quant.iter_value % 100 == 1:
-        print("Number of radiative layers converged: {:d} out of {:d}.".format(int(sum(quant.converged)), int((quant.nlayer + 1) - sum(quant.conv_layer))))
+        print(
+            "Number of radiative layers converged: {:d} out of {:d}.".format(
+                int(sum(quant.converged)),
+                int((quant.nlayer + 1) - sum(quant.conv_layer)),
+            )
+        )
 
     if sum(quant.converged) == (quant.nlayer + 1) - sum(quant.conv_layer):
         criterion = 1
@@ -309,20 +388,38 @@ def give_feedback_on_convergence(quant):
 
         if n < len(start_layers) - 1:
 
-            interface_to_be_tested = int((start_layers[n] + end_layers[n] + 1) / 2)
+            interface_to_be_tested = int(
+                (start_layers[n] + end_layers[n] + 1) / 2
+            )
 
-            local_F_net_diff = abs(quant.F_intern + quant.F_add_heat_sum[interface_to_be_tested - 1] - quant.F_net[interface_to_be_tested]) / (quant.F_down_tot[quant.nlayer] + quant.F_intern)
-            print("Radiative energy imbalance in intermediate rad. layers is {:.3e} and should be less than {:.1e}".format(local_F_net_diff, quant.rad_convergence_limit))
+            local_F_net_diff = abs(
+                quant.F_intern
+                + quant.F_add_heat_sum[interface_to_be_tested - 1]
+                - quant.F_net[interface_to_be_tested]
+            ) / (quant.F_down_tot[quant.nlayer] + quant.F_intern)
+            print(
+                "Radiative energy imbalance in intermediate rad. layers is {:.3e} and should be less than {:.1e}".format(
+                    local_F_net_diff, quant.rad_convergence_limit
+                )
+            )
         else:
-            local_F_net_diff = abs(quant.F_intern + quant.F_add_heat_sum[quant.nlayer - 1] - quant.F_net[quant.nlayer]) / (quant.F_down_tot[quant.nlayer] + quant.F_intern)
-            print("Global energy imbalance is {:.3e} and should be less than {:.1e}".format(local_F_net_diff, quant.rad_convergence_limit))
+            local_F_net_diff = abs(
+                quant.F_intern
+                + quant.F_add_heat_sum[quant.nlayer - 1]
+                - quant.F_net[quant.nlayer]
+            ) / (quant.F_down_tot[quant.nlayer] + quant.F_intern)
+            print(
+                "Global energy imbalance is {:.3e} and should be less than {:.1e}".format(
+                    local_F_net_diff, quant.rad_convergence_limit
+                )
+            )
 
 
 def sum_mean_optdepth(quant, i, opac):
-    """ returns the summed up optical depth from the TOA with an opacity source, e.g. Rosseland mean opacity """
+    """returns the summed up optical depth from the TOA with an opacity source, e.g. Rosseland mean opacity"""
 
     tau = 0
-    for j in np.arange(quant.nlayer-1, i-1, -1):
+    for j in np.arange(quant.nlayer - 1, i - 1, -1):
         if opac[j] == -3:
             continue
         else:
@@ -335,27 +432,37 @@ def sum_mean_optdepth(quant, i, opac):
 
 
 def conv_check(quant):
-    """ checks whether the lapse rate exceeds the allowed dry adiabat, if yes mark it for convective correction """
+    """checks whether the lapse rate exceeds the allowed dry adiabat, if yes mark it for convective correction"""
 
     # erase all previous information and start to check from zero
-    quant.conv_unstable = np.zeros(quant.nlayer + 1, np.int32)  # including the surface/BOA "ghost layer"
+    quant.conv_unstable = np.zeros(
+        quant.nlayer + 1, np.int32
+    )  # including the surface/BOA "ghost layer"
 
-    for i in range(quant.nlayer-1):
+    for i in range(quant.nlayer - 1):
 
-        if quant.p_lay[i] <= 1e1:  # ignore top atmosphere, since artificial/numerical temperature peaks might occur there
+        if (
+            quant.p_lay[i] <= 1e1
+        ):  # ignore top atmosphere, since artificial/numerical temperature peaks might occur there
             break
 
-        T_in_between_lim = quant.T_lay[i] * (quant.p_int[i+1] / quant.p_lay[i]) ** (quant.kappa_lay[i] * (1+1e-6))
+        T_in_between_lim = quant.T_lay[i] * (
+            quant.p_int[i + 1] / quant.p_lay[i]
+        ) ** (quant.kappa_lay[i] * (1 + 1e-6))
 
-        T_ad_lim = T_in_between_lim * (quant.p_lay[i+1] / quant.p_int[i+1]) ** (quant.kappa_int[i+1] * (1+1e-6))
+        T_ad_lim = T_in_between_lim * (
+            quant.p_lay[i + 1] / quant.p_int[i + 1]
+        ) ** (quant.kappa_int[i + 1] * (1 + 1e-6))
 
-        if quant.T_lay[i+1] < T_ad_lim:
+        if quant.T_lay[i + 1] < T_ad_lim:
 
             quant.conv_unstable[i] = 1
-            quant.conv_unstable[i+1] = 1
+            quant.conv_unstable[i + 1] = 1
 
     # do the surface/BOA condition
-    T_ad_lim = quant.T_lay[quant.nlayer] * (quant.p_lay[0] / quant.p_int[0]) ** (quant.kappa_int[0] * (1 + 1e-6))
+    T_ad_lim = quant.T_lay[quant.nlayer] * (
+        quant.p_lay[0] / quant.p_int[0]
+    ) ** (quant.kappa_int[0] * (1 + 1e-6))
 
     if quant.T_lay[0] < T_ad_lim:
         quant.conv_unstable[quant.nlayer] = 1
@@ -366,7 +473,7 @@ def conv_check(quant):
 
 
 def conv_correct(quant, fudging):
-    """ corrects unstable lapse rates to dry adiabats, conserving the total enthalpy """
+    """corrects unstable lapse rates to dry adiabats, conserving the total enthalpy"""
 
     to_be_corrected_list = []
     start_layers = []
@@ -389,9 +496,9 @@ def conv_correct(quant, fudging):
         to_be_corrected_list = np.insert(to_be_corrected_list[:-1], 0, -1)
 
     for i in range(len(to_be_corrected_list)):
-        if to_be_corrected_list[i]-1 not in to_be_corrected_list:
+        if to_be_corrected_list[i] - 1 not in to_be_corrected_list:
             start_layers.append(to_be_corrected_list[i])
-        if to_be_corrected_list[i]+1 not in to_be_corrected_list:
+        if to_be_corrected_list[i] + 1 not in to_be_corrected_list:
             end_layers.append(to_be_corrected_list[i])
 
     # quick self-check
@@ -409,25 +516,35 @@ def conv_correct(quant, fudging):
 
                 if m != len(start_layers) - 1:
 
-                    p_top = quant.p_lay[start_layers[m+1]]
+                    p_top = quant.p_lay[start_layers[m + 1]]
                     if end_layers[m] != -1:
                         p_bot = quant.p_lay[end_layers[m]]
                     elif end_layers[m] == -1:
                         p_bot = quant.p_int[0]
 
-                    if (p_top / p_bot) < (1 / np.e):  # (=H) avoiding small RT zones of width < H
-                        interface_to_be_tested = int((end_layers[m] + start_layers[m+1]) / 2)
+                    if (p_top / p_bot) < (
+                        1 / np.e
+                    ):  # (=H) avoiding small RT zones of width < H
+                        interface_to_be_tested = int(
+                            (end_layers[m] + start_layers[m + 1]) / 2
+                        )
                         break
 
                 else:  # toplayers
 
-                    interface_to_be_tested = int(0.8 * end_layers[m] + 0.2 * (quant.ninterface - 1))
+                    interface_to_be_tested = int(
+                        0.8 * end_layers[m] + 0.2 * (quant.ninterface - 1)
+                    )
 
-            if quant.input_dampara == 'automatic':
+            if quant.input_dampara == "automatic":
 
-                if quant.T_star > 10:  # values for cases with a stellar irradiation
+                if (
+                    quant.T_star > 10
+                ):  # values for cases with a stellar irradiation
 
-                    if n < len(start_layers) - 1:  # in the case of intermediate radiative zone, fudging needs to be stronger
+                    if (
+                        n < len(start_layers) - 1
+                    ):  # in the case of intermediate radiative zone, fudging needs to be stronger
 
                         quant.dampara = 0.5  # dampara = damping parameter (because dampens the conv. zone fudging )
 
@@ -442,9 +559,19 @@ def conv_correct(quant, fudging):
             else:
                 quant.dampara = float(quant.input_dampara)
 
-            fudge_factor[n] = ((quant.F_intern + quant.F_add_heat_sum[interface_to_be_tested-1] + quant.F_smooth_sum[interface_to_be_tested-1] + quant.F_down_tot[interface_to_be_tested]) / quant.F_up_tot[interface_to_be_tested]) ** (1.0 / quant.dampara)
+            fudge_factor[n] = (
+                (
+                    quant.F_intern
+                    + quant.F_add_heat_sum[interface_to_be_tested - 1]
+                    + quant.F_smooth_sum[interface_to_be_tested - 1]
+                    + quant.F_down_tot[interface_to_be_tested]
+                )
+                / quant.F_up_tot[interface_to_be_tested]
+            ) ** (1.0 / quant.dampara)
 
-            fudge_factor[n] = min(1.01, max(0.99, fudge_factor[n]))  # to prevent instabilities
+            fudge_factor[n] = min(
+                1.01, max(0.99, fudge_factor[n])
+            )  # to prevent instabilities
 
         ## uncomment next few lines for debugging
         # if quant.iter_value % 100 == 0:
@@ -466,7 +593,12 @@ def conv_correct(quant, fudging):
 
         for i in range(start_index, stop_index + 1):
 
-            num += quant.c_p_lay[i] / quant.meanmolmass_lay[i] * quant.T_lay[i] * (quant.p_int[i] - quant.p_int[i+1])
+            num += (
+                quant.c_p_lay[i]
+                / quant.meanmolmass_lay[i]
+                * quant.T_lay[i]
+                * (quant.p_int[i] - quant.p_int[i + 1])
+            )
 
             denom_element = 1
 
@@ -474,9 +606,20 @@ def conv_correct(quant, fudging):
 
                 for j in range(start_index, i):
 
-                    denom_element *= (quant.p_lay[j]/quant.p_int[j])**quant.kappa_int[j] * (quant.p_int[j+1]/quant.p_lay[j])**quant.kappa_lay[j]
+                    denom_element *= (
+                        quant.p_lay[j] / quant.p_int[j]
+                    ) ** quant.kappa_int[j] * (
+                        quant.p_int[j + 1] / quant.p_lay[j]
+                    ) ** quant.kappa_lay[
+                        j
+                    ]
 
-            denom_element *= (quant.p_lay[i]/quant.p_int[i])**quant.kappa_int[i] * quant.c_p_lay[i] / quant.meanmolmass_lay[i] * (quant.p_int[i] - quant.p_int[i+1])
+            denom_element *= (
+                (quant.p_lay[i] / quant.p_int[i]) ** quant.kappa_int[i]
+                * quant.c_p_lay[i]
+                / quant.meanmolmass_lay[i]
+                * (quant.p_int[i] - quant.p_int[i + 1])
+            )
 
             denom += denom_element
 
@@ -494,9 +637,15 @@ def conv_correct(quant, fudging):
 
                 for j in range(start_index, i):
 
-                    factor *= (quant.p_lay[j]/quant.p_int[j])**quant.kappa_int[j] * (quant.p_int[j+1]/quant.p_lay[j])**quant.kappa_lay[j]
+                    factor *= (
+                        quant.p_lay[j] / quant.p_int[j]
+                    ) ** quant.kappa_int[j] * (
+                        quant.p_int[j + 1] / quant.p_lay[j]
+                    ) ** quant.kappa_lay[
+                        j
+                    ]
 
-            factor *= (quant.p_lay[i]/quant.p_int[i])**quant.kappa_int[i]
+            factor *= (quant.p_lay[i] / quant.p_int[i]) ** quant.kappa_int[i]
 
             quant.T_lay[i] = mean_pot_temp * factor
 
@@ -507,7 +656,7 @@ def conv_correct(quant, fudging):
 
 
 def convective_adjustment(quant):
-    """ adjusts the atmosphere for convective equilibrium. """
+    """adjusts the atmosphere for convective equilibrium."""
 
     iter = 0
 
@@ -543,7 +692,7 @@ def convective_adjustment(quant):
 
 
 def mark_convective_layers(quant, stitching):
-    """ marks the layers where convection dominates over radiative transfer """
+    """marks the layers where convection dominates over radiative transfer"""
 
     # reset bottom boundary
     quant.conv_layer[quant.nlayer] = 0
@@ -551,26 +700,34 @@ def mark_convective_layers(quant, stitching):
 
     for i in range(quant.nlayer - 1):
 
-        if quant.p_lay[i] <= 1e1:  # ignore top atmosphere, since artificial/numerical temperature peaks might occur there
+        if (
+            quant.p_lay[i] <= 1e1
+        ):  # ignore top atmosphere, since artificial/numerical temperature peaks might occur there
             break
 
-        T_in_between_lim = quant.T_lay[i] * (quant.p_int[i + 1] / quant.p_lay[i]) ** (quant.kappa_lay[i] * (1 - 1e-6))
+        T_in_between_lim = quant.T_lay[i] * (
+            quant.p_int[i + 1] / quant.p_lay[i]
+        ) ** (quant.kappa_lay[i] * (1 - 1e-6))
 
-        T_ad_lim = T_in_between_lim * (quant.p_lay[i + 1] / quant.p_int[i + 1]) ** (quant.kappa_int[i + 1] * (1 - 1e-6))
+        T_ad_lim = T_in_between_lim * (
+            quant.p_lay[i + 1] / quant.p_int[i + 1]
+        ) ** (quant.kappa_int[i + 1] * (1 - 1e-6))
 
-        if quant.T_lay[i+1] < T_ad_lim:
+        if quant.T_lay[i + 1] < T_ad_lim:
             quant.conv_layer[i] = 1
-            quant.conv_layer[i+1] = 1
+            quant.conv_layer[i + 1] = 1
         else:
             quant.conv_layer[i + 1] = 0
 
     # # to avoid kinks at top edge of conv. zone
     for i in range(quant.nlayer - 1):
-        if quant.T_lay[i+1] > quant.T_lay[i]:
+        if quant.T_lay[i + 1] > quant.T_lay[i]:
             quant.conv_layer[i] = 0
 
     # do the surface/BOA condition
-    T_ad_lim = quant.T_lay[quant.nlayer] * (quant.p_lay[0] / quant.p_int[0]) ** (quant.kappa_int[0] * (1 - 1e-6))
+    T_ad_lim = quant.T_lay[quant.nlayer] * (
+        quant.p_lay[0] / quant.p_int[0]
+    ) ** (quant.kappa_int[0] * (1 - 1e-6))
 
     if quant.T_lay[0] < T_ad_lim:
         quant.conv_layer[quant.nlayer] = 1
@@ -583,7 +740,7 @@ def mark_convective_layers(quant, stitching):
 
 
 def stitching_convective_zone_holes(quant):
-    """ fills up holes in the convective zones if they are preventing convergence """
+    """fills up holes in the convective zones if they are preventing convergence"""
 
     start_layers = []
     end_layers = []
@@ -593,14 +750,14 @@ def stitching_convective_zone_holes(quant):
         if quant.conv_layer[i] == 1:
 
             if i > 0:
-                if quant.conv_layer[i-1] == 0:
+                if quant.conv_layer[i - 1] == 0:
                     start_layers.append(i)
             elif i == 0:
                 if quant.conv_layer[quant.nlayer] == 0:
                     start_layers.append(i)
 
             if i < quant.nlayer - 1:
-                if quant.conv_layer[i+1] == 0:
+                if quant.conv_layer[i + 1] == 0:
                     end_layers.append(i)
             elif i == quant.nlayer - 1:
                 end_layers.append(i)
@@ -620,30 +777,37 @@ def stitching_convective_zone_holes(quant):
         print("Error in stitching calculation. Aborting...")
         raise SystemExit()
 
-    for n in range(len(start_layers)-1):
+    for n in range(len(start_layers) - 1):
 
-        p_top = quant.p_lay[start_layers[n+1]]
-        if end_layers[n] != - 1:
+        p_top = quant.p_lay[start_layers[n + 1]]
+        if end_layers[n] != -1:
             p_bot = quant.p_lay[end_layers[n]]
-        elif end_layers[n] == - 1:
+        elif end_layers[n] == -1:
             p_bot = quant.p_int[0]
 
-        if (p_top / p_bot) > (1 / np.e):  # (=H) stitching small RT zones of width < H
+        if (p_top / p_bot) > (
+            1 / np.e
+        ):  # (=H) stitching small RT zones of width < H
 
-            for m in range(end_layers[n]+1, start_layers[n+1]):
+            for m in range(end_layers[n] + 1, start_layers[n + 1]):
 
                 quant.conv_layer[m] = 1
 
 
 def calculate_conv_flux(quant):
-    """ calculates the convective net flux in the atmosphere. """
+    """calculates the convective net flux in the atmosphere."""
 
     quant.F_net_conv = np.zeros(quant.ninterface, quant.fl_prec)
 
     for i in range(1, quant.ninterface):
 
-        if quant.conv_layer[i-1] == 1:
-            quant.F_net_conv[i] = quant.F_intern + quant.F_add_heat_sum[i-1] + quant.F_smooth_sum[i-1] - quant.F_net[i]
+        if quant.conv_layer[i - 1] == 1:
+            quant.F_net_conv[i] = (
+                quant.F_intern
+                + quant.F_add_heat_sum[i - 1]
+                + quant.F_smooth_sum[i - 1]
+                - quant.F_net[i]
+            )
             # note: F_add_heat_sum and F_smooth_sum are interface quantities, but they start at interface=1 and have length nlayer
 
     # BOA / surface layer
@@ -652,7 +816,7 @@ def calculate_conv_flux(quant):
 
 
 def calc_F_ratio(quant):
-    """ calculates the planet to star flux ratio for sec. eclipse data interpretation """
+    """calculates the planet to star flux ratio for sec. eclipse data interpretation"""
 
     if quant.T_star > 10:
         orbital_factor = (quant.R_planet / quant.R_star) ** 2
@@ -660,10 +824,18 @@ def calc_F_ratio(quant):
         for x in range(quant.nbin):
 
             # original means here: without the energy correction factor
-            original_star_BB_flux = np.pi * quant.planckband_lay[quant.nlayer + x * (quant.nlayer+2)] / quant.star_corr_factor
+            original_star_BB_flux = (
+                np.pi
+                * quant.planckband_lay[quant.nlayer + x * (quant.nlayer + 2)]
+                / quant.star_corr_factor
+            )
 
             if original_star_BB_flux != 0:
-                ratio = orbital_factor * quant.F_up_band[x + quant.nlayer * quant.nbin] / original_star_BB_flux
+                ratio = (
+                    orbital_factor
+                    * quant.F_up_band[x + quant.nlayer * quant.nbin]
+                    / original_star_BB_flux
+                )
             else:
                 ratio = 0
 
@@ -671,35 +843,49 @@ def calc_F_ratio(quant):
 
 
 def calculate_height_z(quant):
-    """ calculates the altitude of the layer centers, either above ground or 10 bar pressure level """
+    """calculates the altitude of the layer centers, either above ground or 10 bar pressure level"""
 
-    if quant.planet_type == 'gas':
+    if quant.planet_type == "gas":
 
         # gas planets with pressures of more than 10 bar: white light radius at 10 bar
-        i_white_light_radius = max([i for i in range(quant.nlayer) if quant.p_lay[i] >= 1e7])
+        i_white_light_radius = max(
+            [i for i in range(quant.nlayer) if quant.p_lay[i] >= 1e7]
+        )
 
         quant.z_lay[i_white_light_radius] = 0
 
         # calculates the height of layers above and the height of layers below z = 0
         for i in range(i_white_light_radius + 1, quant.nlayer):
 
-            quant.z_lay[i] = quant.z_lay[i-1] + 0.5 * quant.delta_z_lay[i-1] + 0.5 * quant.delta_z_lay[i]
+            quant.z_lay[i] = (
+                quant.z_lay[i - 1]
+                + 0.5 * quant.delta_z_lay[i - 1]
+                + 0.5 * quant.delta_z_lay[i]
+            )
 
         for i in range(i_white_light_radius - 1, 0 - 1, -1):
 
-            quant.z_lay[i] = quant.z_lay[i + 1] - 0.5 * quant.delta_z_lay[i + 1] - 0.5 * quant.delta_z_lay[i]
+            quant.z_lay[i] = (
+                quant.z_lay[i + 1]
+                - 0.5 * quant.delta_z_lay[i + 1]
+                - 0.5 * quant.delta_z_lay[i]
+            )
 
-    elif quant.planet_type in ['rocky', 'no_atmosphere']:
+    elif quant.planet_type in ["rocky", "no_atmosphere"]:
 
         quant.z_lay[0] = 0.5 * quant.delta_z_lay[0]
 
         for i in range(1, quant.nlayer):
 
-            quant.z_lay[i] = quant.z_lay[i-1] + 0.5 * quant.delta_z_lay[i-1] + 0.5 * quant.delta_z_lay[i]
+            quant.z_lay[i] = (
+                quant.z_lay[i - 1]
+                + 0.5 * quant.delta_z_lay[i - 1]
+                + 0.5 * quant.delta_z_lay[i]
+            )
 
 
 def calc_add_heating_flux(quant):
-    """ calculates the UV heating flux -- individual layers and added up to get the total additional atmospheric heating """
+    """calculates the UV heating flux -- individual layers and added up to get the total additional atmospheric heating"""
 
     quant.F_add_heat_lay = quant.add_heat_dens * quant.delta_z_lay
 
@@ -708,18 +894,27 @@ def calc_add_heating_flux(quant):
         if i == 0:
             quant.F_add_heat_sum[i] = quant.F_add_heat_lay[i]
         else:
-            quant.F_add_heat_sum[i] = quant.F_add_heat_sum[i-1] + quant.F_add_heat_lay[i]
+            quant.F_add_heat_sum[i] = (
+                quant.F_add_heat_sum[i - 1] + quant.F_add_heat_lay[i]
+            )
 
 
 def calculate_pressure_levels(quant):
 
-    press_levels = [quant.p_boa * (quant.p_toa/quant.p_boa)**(i/(2 * quant.nlayer - 1)) for i in range(2 * quant.nlayer)]
+    press_levels = [
+        quant.p_boa
+        * (quant.p_toa / quant.p_boa) ** (i / (2 * quant.nlayer - 1))
+        for i in range(2 * quant.nlayer)
+    ]
 
     p_layer = [press_levels[i] for i in range(1, 2 * quant.nlayer, 2)]
 
     p_interface = [press_levels[i] for i in range(0, 2 * quant.nlayer, 2)]
 
-    p_interface.append(quant.p_toa * (quant.p_toa/quant.p_boa)**(1/(2 * quant.nlayer - 1)))
+    p_interface.append(
+        quant.p_toa
+        * (quant.p_toa / quant.p_boa) ** (1 / (2 * quant.nlayer - 1))
+    )
 
     return p_layer, p_interface
 
@@ -730,9 +925,16 @@ def construct_grid(quant):
 
     for i in range(quant.nlayer):
 
-        quant.delta_colmass.append((quant.p_int[i] - quant.p_int[i + 1]) / quant.g)
-        quant.delta_col_upper.append((quant.p_lay[i] - quant.p_int[i + 1]) / quant.g)
-        quant.delta_col_lower.append((quant.p_int[i] - quant.p_lay[i]) / quant.g)
+        quant.delta_colmass.append(
+            (quant.p_int[i] - quant.p_int[i + 1]) / quant.g
+        )
+        quant.delta_col_upper.append(
+            (quant.p_lay[i] - quant.p_int[i + 1]) / quant.g
+        )
+        quant.delta_col_lower.append(
+            (quant.p_int[i] - quant.p_lay[i]) / quant.g
+        )
+
 
 # keep this for a later implementation -- later as in some time in the future... in the far future
 # def calc_sensible_heat_flux(quant):
@@ -812,13 +1014,25 @@ def interpolate_vmr_to_opacity_grid(read, quant, vmr):
             reduced_p = 0
 
             try:
-                t_left = max([t for t in range(len(temp_old)) if temp_old[t] <= temp_new[i]])
+                t_left = max(
+                    [
+                        t
+                        for t in range(len(temp_old))
+                        if temp_old[t] <= temp_new[i]
+                    ]
+                )
             except ValueError:
                 t_left = 0
                 reduced_t = 1
 
             try:
-                p_left = max([p for p in range(len(press_old)) if press_old[p] <= press_new[j]])
+                p_left = max(
+                    [
+                        p
+                        for p in range(len(press_old))
+                        if press_old[p] <= press_new[j]
+                    ]
+                )
             except ValueError:
                 p_left = 0
                 reduced_p = 1
@@ -831,48 +1045,75 @@ def interpolate_vmr_to_opacity_grid(read, quant, vmr):
 
             if reduced_p == 1 and reduced_t == 1:
 
-                vmr_new[j + quant.npress * i] = vmr_old[p_left + old_np * t_left]
+                vmr_new[j + quant.npress * i] = vmr_old[
+                    p_left + old_np * t_left
+                ]
 
             elif reduced_p != 1 and reduced_t == 1:
 
                 p_right = p_left + 1
 
-                vmr_new[j + quant.npress * i] = \
-                        (vmr_old[p_right + old_np * t_left] * (np.log10(press_new[j]) - np.log10(press_old[p_left])) \
-                         + vmr_old[p_left + old_np * t_left] * (np.log10(press_old[p_right]) - np.log10(press_new[j])) \
-                         ) / (np.log10(press_old[p_right]) - np.log10(press_old[p_left]))
+                vmr_new[j + quant.npress * i] = (
+                    vmr_old[p_right + old_np * t_left]
+                    * (np.log10(press_new[j]) - np.log10(press_old[p_left]))
+                    + vmr_old[p_left + old_np * t_left]
+                    * (np.log10(press_old[p_right]) - np.log10(press_new[j]))
+                ) / (
+                    np.log10(press_old[p_right]) - np.log10(press_old[p_left])
+                )
 
             elif reduced_p == 1 and reduced_t != 1:
 
                 t_right = t_left + 1
 
-                vmr_new[j + quant.npress * i] = \
-                    (vmr_old[p_left + old_np * t_right] * (temp_new[i] - temp_old[t_left]) \
-                     + vmr_old[p_left + old_np * t_left] * (temp_old[t_right] - temp_new[i]) \
-                     ) / (temp_old[t_right] - temp_old[t_left])
+                vmr_new[j + quant.npress * i] = (
+                    vmr_old[p_left + old_np * t_right]
+                    * (temp_new[i] - temp_old[t_left])
+                    + vmr_old[p_left + old_np * t_left]
+                    * (temp_old[t_right] - temp_new[i])
+                ) / (temp_old[t_right] - temp_old[t_left])
 
             elif reduced_p != 1 and reduced_t != 1:
 
                 p_right = p_left + 1
                 t_right = t_left + 1
 
-                vmr_new[j + quant.npress * i] = \
-                    (
-                        vmr_old[p_right + old_np * t_right] * (temp_new[i] - temp_old[t_left]) * (np.log10(press_new[j]) - np.log10(press_old[p_left])) \
-                        + vmr_old[p_left + old_np * t_right] * (temp_new[i] - temp_old[t_left]) * (np.log10(press_old[p_right]) - np.log10(press_new[j])) \
-                        + vmr_old[p_right + old_np * t_left] * (temp_old[t_right] - temp_new[i]) * (np.log10(press_new[j]) - np.log10(press_old[p_left])) \
-                        + vmr_old[p_left + old_np * t_left] * (temp_old[t_right] - temp_new[i]) * (np.log10(press_old[p_right]) - np.log10(press_new[j])) \
-                        ) / ((temp_old[t_right] - temp_old[t_left]) * (np.log10(press_old[p_right]) - np.log10(press_old[p_left])))
+                vmr_new[j + quant.npress * i] = (
+                    vmr_old[p_right + old_np * t_right]
+                    * (temp_new[i] - temp_old[t_left])
+                    * (np.log10(press_new[j]) - np.log10(press_old[p_left]))
+                    + vmr_old[p_left + old_np * t_right]
+                    * (temp_new[i] - temp_old[t_left])
+                    * (np.log10(press_old[p_right]) - np.log10(press_new[j]))
+                    + vmr_old[p_right + old_np * t_left]
+                    * (temp_old[t_right] - temp_new[i])
+                    * (np.log10(press_new[j]) - np.log10(press_old[p_left]))
+                    + vmr_old[p_left + old_np * t_left]
+                    * (temp_old[t_right] - temp_new[i])
+                    * (np.log10(press_old[p_right]) - np.log10(press_new[j]))
+                ) / (
+                    (temp_old[t_right] - temp_old[t_left])
+                    * (
+                        np.log10(press_old[p_right])
+                        - np.log10(press_old[p_left])
+                    )
+                )
 
             if np.isnan(vmr_new[j + quant.npress * i]):
-                print("NaN-Error at entry with indices:", "pressure:", j, "temperature:", i)
+                print(
+                    "NaN-Error at entry with indices:",
+                    "pressure:",
+                    j,
+                    "temperature:",
+                    i,
+                )
                 raise SystemExit()
 
     return vmr_new
 
 
 def calculate_vmr_for_all_species(quant):
-    """ calculates VMR for all species in on-the-fly opacity mixing mode """
+    """calculates VMR for all species in on-the-fly opacity mixing mode"""
 
     quant.T_lay = quant.dev_T_lay.get()
     quant.T_int = quant.dev_T_int.get()
@@ -890,42 +1131,59 @@ def calculate_vmr_for_all_species(quant):
         # interpolate pretabulated VMR for FastChem grid to vertical VMR profiles
         if quant.species_list[s].source_for_vmr == "FastChem":
 
-            vmr_2D = quant.species_list[s].vmr_pretab.reshape((quant.ntemp, quant.npress))
+            vmr_2D = quant.species_list[s].vmr_pretab.reshape(
+                (quant.ntemp, quant.npress)
+            )
 
-            quant.species_list[s].vmr_layer = interpolate_grid_to_lay_or_int(log_kpress, quant.ktemp, vmr_2D, log_p_lay, quant.T_lay)
+            quant.species_list[s].vmr_layer = interpolate_grid_to_lay_or_int(
+                log_kpress, quant.ktemp, vmr_2D, log_p_lay, quant.T_lay
+            )
             if quant.iso == 0:
-                quant.species_list[s].vmr_interface = interpolate_grid_to_lay_or_int(log_kpress, quant.ktemp, vmr_2D, log_p_int, quant.T_int)
+                quant.species_list[
+                    s
+                ].vmr_interface = interpolate_grid_to_lay_or_int(
+                    log_kpress, quant.ktemp, vmr_2D, log_p_int, quant.T_int
+                )
 
             # convert to numpy arrays in order to have the correct format for copying to GPU
-            quant.species_list[s].vmr_layer = np.array(quant.species_list[s].vmr_layer, quant.fl_prec)
-            quant.species_list[s].vmr_interface = np.array(quant.species_list[s].vmr_interface, quant.fl_prec)
+            quant.species_list[s].vmr_layer = np.array(
+                quant.species_list[s].vmr_layer, quant.fl_prec
+            )
+            quant.species_list[s].vmr_interface = np.array(
+                quant.species_list[s].vmr_interface, quant.fl_prec
+            )
 
 
-def interpolate_grid_to_lay_or_int(log_press, temp, vmr_2D, log_press_profile, temp_profile):
-    """ interpolates quantities on 2D to atmospheric T-P profile """
+def interpolate_grid_to_lay_or_int(
+    log_press, temp, vmr_2D, log_press_profile, temp_profile
+):
+    """interpolates quantities on 2D to atmospheric T-P profile"""
 
     func = interpolate.RectBivariateSpline(temp, log_press, vmr_2D, kx=1, ky=1)
-    vmr_lay_or_int = [func(temp_profile[p], log_press_profile[p])[0][0] for p in range(len(log_press_profile))]
+    vmr_lay_or_int = [
+        func(temp_profile[p], log_press_profile[p])[0][0]
+        for p in range(len(log_press_profile))
+    ]
 
     return vmr_lay_or_int
 
 
 def calculate_meanmolecularmass(quant):
-    """ calculates mean molecular mass in on-the-fly opacity mixing mode """
+    """calculates mean molecular mass in on-the-fly opacity mixing mode"""
 
     # calculating mean molecular mass for each layer
-    quant.meanmolmass_lay = calc_meanmolmass(quant, type='layer')
+    quant.meanmolmass_lay = calc_meanmolmass(quant, type="layer")
 
     quant.dev_meanmolmass_lay = gpuarray.to_gpu(quant.meanmolmass_lay)
 
     if quant.iso == 0:
-        quant.meanmolmass_int = calc_meanmolmass(quant, type='interface')
+        quant.meanmolmass_int = calc_meanmolmass(quant, type="interface")
 
         quant.dev_meanmolmass_int = gpuarray.to_gpu(quant.meanmolmass_int)
 
 
-def calc_meanmolmass(quant, type='layer'):
-    """ calculates mean molecular mass based on VMR of all species """
+def calc_meanmolmass(quant, type="layer"):
+    """calculates mean molecular mass based on VMR of all species"""
 
     if type == "layer":
         nlayer_or_ninterface = quant.nlayer
@@ -941,26 +1199,36 @@ def calc_meanmolmass(quant, type='layer'):
 
         for s in range(len(quant.species_list)):
 
-            if ("CIA" not in quant.species_list[s].name) and (quant.species_list[s].name != "H-_ff") and (quant.species_list[s].name != "He-"):
+            if (
+                ("CIA" not in quant.species_list[s].name)
+                and (quant.species_list[s].name != "H-_ff")
+                and (quant.species_list[s].name != "He-")
+            ):
 
                 if type == "layer":
                     vmr_lay_or_int = quant.species_list[s].vmr_layer
                 elif type == "interface":
                     vmr_lay_or_int = quant.species_list[s].vmr_interface
 
-                meanmolmass_lay_or_int[i] += vmr_lay_or_int[i] * quant.species_list[s].weight
+                meanmolmass_lay_or_int[i] += (
+                    vmr_lay_or_int[i] * quant.species_list[s].weight
+                )
 
                 vmr_lay_or_int_total += vmr_lay_or_int[i]
 
-        meanmolmass_lay_or_int[i] /= vmr_lay_or_int_total  # normalizing with respect to total VMR of all species
+        meanmolmass_lay_or_int[
+            i
+        ] /= vmr_lay_or_int_total  # normalizing with respect to total VMR of all species
 
-    meanmolmass_lay_or_int = np.array(meanmolmass_lay_or_int * pc.AMU, quant.fl_prec)  # converting weight (or molar mass) to molecular mass
+    meanmolmass_lay_or_int = np.array(
+        meanmolmass_lay_or_int * pc.AMU, quant.fl_prec
+    )  # converting weight (or molar mass) to molecular mass
 
     return meanmolmass_lay_or_int
 
 
 def calculate_coupling_convergence(quant, read):
-    """ test whether TP profile converged and ends coupled iteration """
+    """test whether TP profile converged and ends coupled iteration"""
 
     coupl_convergence = 0
 
@@ -976,16 +1244,32 @@ def calculate_coupling_convergence(quant, read):
             # get the previous directory name
             for n in range(len(quant.name) - 1, 0, -1):
                 if quant.name[n] == "_":
-                    base_name = quant.name[:n + 1]
+                    base_name = quant.name[: n + 1]
                     break
 
-            previous_name = base_name + str(quant.coupling_iter_nr-1)
+            previous_name = base_name + str(quant.coupling_iter_nr - 1)
 
-            file_path_previous = read.output_path + previous_name + "/" + previous_name + "_tp_coupling_" + str(quant.coupling_iter_nr-1) + ".dat"
+            file_path_previous = (
+                read.output_path
+                + previous_name
+                + "/"
+                + previous_name
+                + "_tp_coupling_"
+                + str(quant.coupling_iter_nr - 1)
+                + ".dat"
+            )
 
         else:
 
-            file_path_previous = read.output_path + quant.name + "/" + quant.name + "_tp_coupling_" + str(quant.coupling_iter_nr - 1) + ".dat"
+            file_path_previous = (
+                read.output_path
+                + quant.name
+                + "/"
+                + quant.name
+                + "_tp_coupling_"
+                + str(quant.coupling_iter_nr - 1)
+                + ".dat"
+            )
 
         with open(file_path_previous, "r") as previous_file:
             next(previous_file)
@@ -994,7 +1278,16 @@ def calculate_coupling_convergence(quant, read):
                 if len(column) > 1:
                     previous_temp.append(quant.fl_prec(column[1]))
 
-        with open(read.output_path + quant.name + "/" + quant.name + "_tp_coupling_" + str(quant.coupling_iter_nr) + ".dat", "r") as current_file:
+        with open(
+            read.output_path
+            + quant.name
+            + "/"
+            + quant.name
+            + "_tp_coupling_"
+            + str(quant.coupling_iter_nr)
+            + ".dat",
+            "r",
+        ) as current_file:
             next(current_file)
             for line in current_file:
                 column = line.split()
@@ -1005,7 +1298,10 @@ def calculate_coupling_convergence(quant, read):
 
         for t in range(len(current_temp)):
 
-            if abs(previous_temp[t] - current_temp[t]) / current_temp[t] < quant.coupl_convergence_limit:
+            if (
+                abs(previous_temp[t] - current_temp[t]) / current_temp[t]
+                < quant.coupl_convergence_limit
+            ):
 
                 converged_list.append(1)
 
@@ -1014,14 +1310,27 @@ def calculate_coupling_convergence(quant, read):
             coupl_convergence = 1
 
         # write out result
-        with open(read.output_path + quant.name + "/" + quant.name + "_coupling_convergence.dat", "w") as file:
+        with open(
+            read.output_path
+            + quant.name
+            + "/"
+            + quant.name
+            + "_coupling_convergence.dat",
+            "w",
+        ) as file:
             file.writelines(str(coupl_convergence))
 
 
 def success_message(quant):
-    """ prints the message that you have been desperately waiting for """
+    """prints the message that you have been desperately waiting for"""
 
-    T_eff_global, T_eff_dayside, T_eff_model, T_star_brightness, T_planet_brightness = temp_calcs(quant)
+    (
+        T_eff_global,
+        T_eff_dayside,
+        T_eff_model,
+        T_star_brightness,
+        T_planet_brightness,
+    ) = temp_calcs(quant)
 
     print("\nDone! Everything appears to have worked fine :-)\n")
 
@@ -1032,19 +1341,48 @@ def success_message(quant):
     # displays following message for usual run until equilibrium
     if quant.physical_tstep == 0:
         print("\nFinal Check for numerical energy balance:")
-        print("  --> Theoretical effective temperature of planet: \n\tglobal (f=0.25): {:g} K,".format(T_eff_global),
-              "\n\tday-side (f=2/3): {:g} K,".format(T_eff_dayside), "\n\tused in model (f={:.3f}): {:g} K.".format(quant.f_factor, T_eff_model))
-        print("  --> Incident TOA brightness temperature: {:g} K \n      Interior temperature: {:g} K".format(T_star_brightness, quant.T_intern),
-              "\n      Outgoing (planetary) brightness temperature: {:g} K".format(T_planet_brightness))
+        print(
+            "  --> Theoretical effective temperature of planet: \n\tglobal (f=0.25): {:g} K,".format(
+                T_eff_global
+            ),
+            "\n\tday-side (f=2/3): {:g} K,".format(T_eff_dayside),
+            "\n\tused in model (f={:.3f}): {:g} K.".format(
+                quant.f_factor, T_eff_model
+            ),
+        )
+        print(
+            "  --> Incident TOA brightness temperature: {:g} K \n      Interior temperature: {:g} K".format(
+                T_star_brightness, quant.T_intern
+            ),
+            "\n      Outgoing (planetary) brightness temperature: {:g} K".format(
+                T_planet_brightness
+            ),
+        )
 
-        relative_energy_imbalance = (quant.F_intern + quant.F_add_heat_sum[quant.ninterface - 2] + quant.F_smooth_sum[quant.ninterface - 2] - quant.F_net[quant.ninterface - 1]) / (quant.F_down_tot[quant.ninterface - 1] + quant.F_intern)
+        relative_energy_imbalance = (
+            quant.F_intern
+            + quant.F_add_heat_sum[quant.ninterface - 2]
+            + quant.F_smooth_sum[quant.ninterface - 2]
+            - quant.F_net[quant.ninterface - 1]
+        ) / (quant.F_down_tot[quant.ninterface - 1] + quant.F_intern)
 
-        print("  --> Global energy imbalance: {:.3f}ppm (positive: too much uptake, negative: too much loss).".format(relative_energy_imbalance*1e6), "\n")
+        print(
+            "  --> Global energy imbalance: {:.3f}ppm (positive: too much uptake, negative: too much loss).".format(
+                relative_energy_imbalance * 1e6
+            ),
+            "\n",
+        )
     # otherwise, just display physical timestep info
     else:
-        print("Model has run in physical timestep mode with a step of {:g} s, and stopped after reaching the runtime limit of {:g} s.".format(quant.physical_tstep, quant.runtime_limit))
+        print(
+            "Model has run in physical timestep mode with a step of {:g} s, and stopped after reaching the runtime limit of {:g} s.".format(
+                quant.physical_tstep, quant.runtime_limit
+            )
+        )
         if quant.convection == 1:
-            print("  --> If convectively unstable layers have been found, convective adjustment has been performed once(!) at the very end.")
+            print(
+                "  --> If convectively unstable layers have been found, convective adjustment has been performed once(!) at the very end."
+            )
 
 
 def nullify_opac_scat_arrays(quant):
@@ -1057,5 +1395,7 @@ def nullify_opac_scat_arrays(quant):
 
 
 if __name__ == "__main__":
-    print("This module stores the definitions for the functions living on the host. "
-          "It is more spacious on the host than on the device, but also warmer.")
+    print(
+        "This module stores the definitions for the functions living on the host. "
+        "It is more spacious on the host than on the device, but also warmer."
+    )
