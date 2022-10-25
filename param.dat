@@ -13,15 +13,15 @@ See online documentation for a detailed explanation of each parameter --> https:
                                                
 === === GENERAL === ===
 
-name =                                                0                               [any string]                                 (CL: Y)
+name =                                                first_haze_input                [any string]                                 (CL: Y)
 output directory =                                    ./output/                       [directory path]                             (CL: Y)
 realtime plotting =                                   yes                             [yes, no, number > 0]                        (CL: Y)
 planet type =                                         gas                             [rocky, gas, no_atmosphere]                  (CL: Y)
 
 === === GRID === ===
 
-TOA pressure [10^-6 bar] =                            1e-1                            [number > 0]                                 (CL: Y)
-BOA pressure [10^-6 bar] =                            1e9                             [number > 0]                                 (CL: Y)
+TOA pressure [10^-6 bar] =                            1e-3                            [number > 0]                                 (CL: Y)
+BOA pressure [10^-6 bar] =                            1e8                             [number > 0]                                 (CL: Y)
 
 === === ITERATION === ===
 
@@ -73,16 +73,21 @@ planet =                                              GJ_1214b                  
 === === CLOUDS === ===
 
 number of cloud decks =                               0                               [number >= 0]                                (CL: Y)
-path to Mie files =                                   ./input/cloud1/ ./input/cloud2/ [directory path(s)]                          (CL: Y, only 1 cloud)
+path to Mie files =                                   ./input/cloud_files/test_soot/  [directory path(s)]                          (CL: Y, only 1 cloud)
 aerosol radius mode [micron] =                        10   20                         [number(s) > 0]                              (CL: Y, only 1 cloud)
 aerosol radius geometric std dev =                    2    1.5                        [number(s) > 1]                              (CL: Y, only 1 cloud)
-cloud mixing ratio =                                  file                            [manual, file]                               (CL: Y)
+cloud mixing ratio =                                  manual                          [manual, file]                               (CL: Y)
   file   --> path to file with cloud data =           ./input/cloud_file.txt          [file path]                                  (CL: Y)
   file   --> cloud file format =                      1 Pressure cgs                  [#skip, press.col., press.unit[cgs,Pa,bar]]  (CL: N)
   file   --> aerosol name =                           Aerosol1  Aerosol2              [name(s) of column(s) with cloud data]       (CL: Y, only 1 cloud)
-  manual --> cloud bottom pressure [10^-6 bar] =      1e5       1e3                   [number(s) > 0]                              (CL: Y, only 1 cloud)
-  manual --> cloud bottom mixing ratio =              1e-19     1e-19                 [number(s): 0 - 1]                           (CL: Y, only 1 cloud)
+  manual --> cloud bottom pressure [10^-6 bar] =      1e4       1e3                   [number(s) > 0]                              (CL: Y, only 1 cloud)
+  manual --> cloud bottom mixing ratio =              5e-10     1e-10                 [number(s): 0 - 1]                           (CL: Y, only 1 cloud)
   manual --> cloud to gas scale height ratio =        0.5       0.5                   [number(s) > 0]                              (CL: Y, only 1 cloud)
+
+=== === HAZES === ===
+
+haze cross section =                                  ./input/cloud_files/test_soot   [path to haze opacity file]                  (CL: Y)
+haze profile file =                                   ./input/haze_profile.dat        [path to haze number density/radius profile] (CL: Y)
 
 === === PHOTOCHEMICAL KINETICS COUPLING === ===
 

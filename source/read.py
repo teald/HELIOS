@@ -1604,17 +1604,19 @@ class Read(object):
         log_file_press = np.log10(press)
         log_helios_press = np.log10(helios_press)
 
+        ndens_bounds = (min(ndens), max(ndens))
+
         hd = interpolate.interp1d(
-                ndens,
                 log_file_press,
+                ndens,
                 bounds_error=False,
-                fill_value=(ndens[0], ndens[-1])
+                fill_value=ndens_bounds
                 )
         hr = interpolate.interp1d(
-                radius,
                 log_file_press,
+                radius,
                 bounds_error=False,
-                fill_value=(radius[0], radius[-1])
+                fill_value=ndens_bounds
                 )
 
         helios_ndens = hd(log_helios_press)
