@@ -100,7 +100,7 @@ class Haze(clouds.Cloud):
             f_cloud_orig,
             kind="linear",
             bounds_error=False,
-            fill_value=np.amin(f_cloud_orig)
+            fill_value=(f_cloud_orig[-1], f_cloud_orig[0])
         )
 
         self.f_one_cloud_lay = cloud_interpol_function(log_p_lay)
@@ -160,6 +160,9 @@ class Haze(clouds.Cloud):
         lambda_helios_int = quant.opac_interwave
 
         hzradii, hzdensity = self.haze_radius, self.haze_density
+
+        # Need to convert radii to microns
+        hzradii = 1e5 * hzradii
 
         int_hzradii = itp.interp1d(
             quant.p_lay, hzradii, fill_value=1e-50, bounds_error=False
