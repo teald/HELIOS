@@ -88,9 +88,7 @@ class Haze(clouds.Cloud):
         # Get the total density of the atmosphere.
         ndens = (quant.p_lay / (const.k_B.cgs * quant.T_lay[1:])).cgs.value
 
-        self.haze_mixing_ratio = self.haze_density / (
-            ndens + self.haze_density
-        )
+        self.haze_mixing_ratio = self.haze_density / ndens
         f_cloud_orig = self.haze_mixing_ratio
 
         log_press_orig = [np.log10(p) for p in quant.p_lay]
@@ -102,7 +100,7 @@ class Haze(clouds.Cloud):
             f_cloud_orig,
             kind="linear",
             bounds_error=False,
-            fill_value=(f_cloud_orig[-1], f_cloud_orig[0]),
+            fill_value=np.amin(f_cloud_orig)
         )
 
         self.f_one_cloud_lay = cloud_interpol_function(log_p_lay)
@@ -161,7 +159,7 @@ class Haze(clouds.Cloud):
         lambda_helios = quant.opac_wave
         lambda_helios_int = quant.opac_interwave
 
-        hzradii, hzdensity = self.get_profile_data(self.haze_profile_data_file)
+        hzradii, hzdensity = self.haze_radius, self.haze_density
 
         int_hzradii = itp.interp1d(
             quant.p_lay, hzradii, fill_value=1e-50, bounds_error=False
