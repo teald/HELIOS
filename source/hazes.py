@@ -100,7 +100,7 @@ class Haze(clouds.Cloud):
             f_cloud_orig,
             kind="linear",
             bounds_error=False,
-            fill_value=(f_cloud_orig[-1], f_cloud_orig[0])
+            fill_value=(f_cloud_orig[-1], f_cloud_orig[0]),
         )
 
         self.f_one_cloud_lay = cloud_interpol_function(log_p_lay)

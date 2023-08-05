@@ -65,6 +65,18 @@ planet_lib["HD_209458b"] = Planet(
     metal_star=0.02,
 )  # references: Southworth (2010)
 
+# TEAL'S GRID
+planet_lib["TEST"] = Planet(
+    R_p=2.85,
+    R_p_unit="R_Earth",
+    g_p=760,
+    a=0.01411,
+    T_star=3026,
+    R_star=0.216,
+    g_star=NotImplemented,
+    metal_star=NotImplemented,
+)  # references: Harpsoe et al. (2013)
+
 if __name__ == "__main__":
     print(
         "This module stores information about planetary systems. No guarantee that anything here is remotely correct."

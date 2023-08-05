@@ -55,6 +55,7 @@ species_lib["CS"] = Species_db(name="CS", fc_name="C1S1", weight=44.0757)
 species_lib["HCHO"] = Species_db(
     name="HCHO", fc_name="H2C1O1", weight=30.02598
 )
+species_lib["C2H6"] = Species_db(name="C2H6", fc_name="C2H6", weight=30.07000)
 species_lib["C2H4"] = Species_db(name="C2H4", fc_name="C2H4", weight=28.05316)
 species_lib["C2H2"] = Species_db(name="C2H2", fc_name="C2H2", weight=26.04)
 species_lib["CH3"] = Species_db(name="CH3", fc_name="C1H3", weight=37.04004)

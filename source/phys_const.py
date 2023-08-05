@@ -22,7 +22,7 @@
 # ==============================================================================
 
 from astropy import constants as const
-
+from astropy import units as u
 
 C = const.c.cgs.value  # speed of light in cm / s
 K_B = const.k_B.cgs.value  # Boltzmann constant in erg / K
@@ -44,6 +44,7 @@ R_EARTH = const.R_earth.cgs.value  # radius Earth in cm, old value
 M_EARTH = const.M_earth.cgs.value  # mass Earth
 G = const.G.cgs.value  # gravitational constant
 SIGMA_T = const.sigma_T.cgs.value  # Thomson scattering cross section
+PC = (1. * u.pc).cgs.value
 
 
 if __name__ == "__main__":

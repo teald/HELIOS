@@ -844,12 +844,11 @@ def calc_F_ratio(quant):
 
 def calculate_height_z(quant):
     """calculates the altitude of the layer centers, either above ground or 10 bar pressure level"""
-
     if quant.planet_type == "gas":
 
         # gas planets with pressures of more than 10 bar: white light radius at 10 bar
         i_white_light_radius = max(
-            [i for i in range(quant.nlayer) if quant.p_lay[i] >= 1e7]
+            [0] + [i for i in range(quant.nlayer) if quant.p_lay[i] >= 1e7]
         )
 
         quant.z_lay[i_white_light_radius] = 0
@@ -936,7 +935,8 @@ def construct_grid(quant):
         )
 
 
-# keep this for a later implementation -- later as in some time in the future... in the far future
+# keep this for a later implementation -- later as in some time in the
+# future... in the far future
 # def calc_sensible_heat_flux(quant):
 #     """ calculates the sensible heat flux for the surface layers """
 #

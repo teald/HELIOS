@@ -481,8 +481,15 @@ class Read(object):
 
         # hazes
         parser.add_argument(
+            "-use_haze",
+            default="no",
+            help="'yes' for haze on, 'no' for haze off, see '-haze_opacity' "
+            "and -haze_profile"
+            )
+
+        parser.add_argument(
             "-haze_opacity",
-            help="Path to the haze cross sectiondirectory.",
+            help="Path to the haze cross section directory.",
             required=False,
         )
         parser.add_argument(
@@ -1232,6 +1239,16 @@ class Read(object):
                 np.float64(args.cloud_to_gas_scale_height_ratio)
             ]
 
+        # hazes
+        if args.use_haze:
+            haze.haze_turned_on = args.use_haze.lower() in on_list
+
+        if args.haze_opacity:
+            haze.haze_opacity_data_dir = args.haze_opacity
+
+        if args.haze_profile:
+            haze.haze_profile_data_file = args.haze_profile
+
         # photochemical kinetics coupling
         if args.coupling_mode:
             quant.coupling = self.__read_yes_no__(args.coupling_mode)
@@ -1392,6 +1409,11 @@ class Read(object):
             quant.nlayer = np.int32(
                 np.ceil(10.5 * np.log10(quant.p_boa / quant.p_toa))
             )
+
+        elif quant.nlayer == "vmr file":
+            # Reads in from whatever was reetrieved when importing vmr file.
+            raise NotImplementedError
+
         else:
             quant.nlayer = np.int32(quant.nlayer)
 
@@ -1898,6 +1920,9 @@ class Read(object):
             next(sfile)
 
             for line in sfile:
+                # Remove comments.
+                if "#" in line:
+                    line = line[: line.index("#")]
 
                 column = line.split()
 
@@ -2058,8 +2083,10 @@ class Read(object):
                     self.vertical_vmr_file,
                     names=True,
                     dtype=None,
+                    encoding=None,
                     skip_header=self.vertical_vmr_file_header_lines,
                 )
+
                 file_press_grid = vertical_vmr[
                     self.vertical_vmr_file_press_name
                 ]
@@ -2100,6 +2127,7 @@ class Read(object):
                     file_press_grid,
                     helios_press_layer,
                 )
+
                 if quant.iso == 0:
                     quant.species_list[
                         s
@@ -2117,6 +2145,15 @@ class Read(object):
                 quant.species_list[s].vmr_interface = np.array(
                     quant.species_list[s].vmr_interface, quant.fl_prec
                 )
+
+                # TODO: PR for this
+                # Check that minimum values are not exceeded.
+                layer_vmr = quant.species_list[s].vmr_layer
+                inter_vmr = quant.species_list[s].vmr_interface
+
+                min_val = 1e-30
+                quant.species_list[s].vmr_layer = np.where(layer_vmr < min_val, min_val, layer_vmr)
+                quant.species_list[s].vmr_inter = np.where(inter_vmr < min_val, min_val, inter_vmr)
 
             # case (ii): pre-tabulated VMR is read in from FastChem. Note, this VMR is still pre-tabulated format, for the TP grid of FastChem.
             # So we are really using a pre-tabulated chemistry but interpolate on-the-fly during the Helios run
@@ -2352,7 +2389,7 @@ class Read(object):
                         read_grid_parameters=read_grid_params,
                     )
 
-                except IOError:
+                except IOError as e1:
 
                     try:
                         quant.species_list[
@@ -2366,17 +2403,29 @@ class Read(object):
                             read_grid_parameters=read_grid_params,
                         )
 
-                    except IOError:
-                        quant.species_list[
-                            s
-                        ].opacity_pretab = self.read_opac_file(
-                            quant,
-                            self.opacity_path
-                            + quant.species_list[s].name
-                            + "_opac_ip_sampling.h5",
-                            type="species",
-                            read_grid_parameters=read_grid_params,
-                        )
+                    except IOError as e2:
+
+                        try:
+                            quant.species_list[
+                                s
+                            ].opacity_pretab = self.read_opac_file(
+                                quant,
+                                self.opacity_path
+                                + quant.species_list[s].name
+                                + "_opac_ip_sampling.h5",
+                                type="species",
+                                read_grid_parameters=read_grid_params,
+                            )
+
+                        except IOError as e3:
+                            # Describe and raise error.
+                            msg = (
+                                f"Got 3 IOErrors when importing species "
+                                f" opacity for {quant.species_list[s].name}:\n"
+                                f"1) {e1}\n2){e2}\n3_{e3}"
+                            )
+
+                            raise IOError(msg)
 
                 # convert to numpy array (necessary for GPU copying)
                 quant.species_list[s].opacity_pretab = np.array(

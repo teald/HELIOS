@@ -1287,6 +1287,52 @@ class Write(object):
             )
 
     @staticmethod
+    def write_vertchem_file(quant, read):
+        """Writes a vertical chemistry profile for the chemistry used in this run."""
+        all_species_str = "   ".join([s.name for s in quant.species_list])
+
+        header = [
+            "200~This file contains the chemical abundances in form of "
+            "volume mixing ratios throughout the vertical grid.",
+            all_species_str,
+        ]
+
+        # Species
+        all_species_str = quant.species_list
+
+        all_species_str = [s.name for s in quant.species_list]
+
+        helios_specs = [s.name for s in quant.species_list]
+
+        all_species = [helios_specs.index(s) for s in all_species_str]
+
+        output_file = (
+            read.output_path
+            + quant.name
+            + "/"
+            + quant.name
+            + "_abund_profiles.dat"
+        )
+
+        with open(output_file, "w+") as outfile:
+            outfile.write("\n".join(header) + "\n")
+
+            for i in range(len(quant.T_lay) - 1):
+                output = [
+                    i,
+                    quant.p_lay[i],
+                    quant.T_lay[i],
+                    quant.meanmolmass_lay[i],
+                ]
+
+                # Species abundances
+                for species in all_species:
+                    output.append(quant.species_list[species].vmr_layer[i])
+
+                output = [str(s) for s in output]
+                outfile.write("  ".join(output) + "\n")
+
+    @staticmethod
     def write_tp_for_coupling(quant, read):
         """writes the TP-profile to a file"""
 

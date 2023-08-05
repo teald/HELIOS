@@ -21,6 +21,47 @@
 #     <http://www.gnu.org/licenses/>.
 # ==============================================================================
 
+# Check GPU Availability first =================================================
+import shlex
+import socket
+import subprocess
+import time
+import random
+import re
+
+
+def get_gpu_processes(gpu_number: int) -> float:
+    "Retrieves all GPU memory, as dict, in MiB"
+    cmd = "gpustat -p"
+    output = subprocess.check_output(shlex.split(cmd), stderr=subprocess.STDOUT)
+
+    data = output.decode('utf-8').split('\n')[gpu_number + 1]
+
+    if not data[0]:
+        return 0
+
+    n_processes = len(data.split('|')[-1].split())
+
+    return n_processes
+
+def wait_in_line(queue_port: int=4215, host: str='localhost'):
+    """Forever-running process that just monitors GPU usage."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    sock.sendto(bytes('ping \n', 'utf-8'), (host, queue_port))
+    socket_id = int(str(sock.recv(1024), "utf-8").strip())
+
+    recieved = int(str(sock.recv(1024), "utf-8").strip())
+
+    if recieved != socket_id:
+        raise ValueError(f"Unexpected id: {socket_id}.")
+
+    return
+
+if __name__ == "__main__":
+    wait_in_line()
+
+# Main Program ================================================================
 
 from source import read
 from source import quantities as quant
@@ -32,9 +73,9 @@ from source import clouds
 from source import hazes
 from source import additional_heating as add_heat
 
-
 def run_helios():
     """a full HELIOS run"""
+
 
     reader = read.Read()
     keeper = quant.Store()
@@ -128,6 +169,10 @@ def run_helios():
     writer.write_flux_ratio_only(keeper, reader)
     writer.write_phase_state(keeper, reader)
     writer.write_surface_albedo(keeper, reader)
+
+    if keeper.species_list:
+        writer.write_vertchem_file(keeper, reader)
+
     writer.write_criterion_warning_file(keeper, reader)
 
     if keeper.coupling == 1:
